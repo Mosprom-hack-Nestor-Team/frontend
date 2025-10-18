@@ -12,6 +12,7 @@ import {
 import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { FiMail, FiLock, FiUser } from 'react-icons/fi';
+import { apiService } from '../services/api';
 
 export const RegisterPage = () => {
   const navigate = useNavigate();
@@ -20,13 +21,20 @@ export const RegisterPage = () => {
     email: '',
     password: '',
   });
+  const [isLoading, setIsLoading] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
-    // Здесь будет логика регистрации
-    console.log('Register:', formData);
-    navigate('/dashboard');
+    setIsLoading(true);
+
+    try {
+      await apiService.register(formData);
+      navigate('/profile');
+    } catch (error) {
+      alert(error instanceof Error ? error.message : 'Ошибка регистрации');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -136,6 +144,7 @@ export const RegisterPage = () => {
                   size="lg"
                   w="full"
                   mt={2}
+                  loading={isLoading}
                 >
                   Зарегистрироваться
                 </Button>

@@ -12,6 +12,7 @@ import {
 import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { FiMail, FiLock } from 'react-icons/fi';
+import { apiService } from '../services/api';
 
 export const LoginPage = () => {
   const navigate = useNavigate();
@@ -19,12 +20,20 @@ export const LoginPage = () => {
     email: '',
     password: '',
   });
+  const [isLoading, setIsLoading] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // Здесь будет логика авторизации
-    console.log('Login:', formData);
-    navigate('/dashboard');
+    setIsLoading(true);
+
+    try {
+      await apiService.login(formData);
+      navigate('/profile');
+    } catch (error) {
+      alert(error instanceof Error ? error.message : 'Ошибка входа. Проверьте email и пароль');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -119,6 +128,7 @@ export const LoginPage = () => {
                   size="lg"
                   w="full"
                   mt={2}
+                  loading={isLoading}
                 >
                   Войти
                 </Button>
