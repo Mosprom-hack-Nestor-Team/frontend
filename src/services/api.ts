@@ -2,7 +2,9 @@
  * API Service for authentication and user management
  */
 
-const API_BASE_URL = 'http://localhost:7878/api/v1';
+const API_BASE_URL =
+  (typeof import.meta !== 'undefined' && (import.meta as any).env?.VITE_API_BASE_URL) ||
+  'http://localhost:7878/api/v1';
 
 export interface UserData {
     id: number;
@@ -35,6 +37,26 @@ export interface LoginData {
 }
 
 class ApiService {
+    private async parseErrorMessage(response: Response): Promise<string> {
+        try {
+            const data = await response.json();
+            const detail = (data as any)?.detail;
+            if (!detail) {
+                return (data as any)?.message || `${response.status} ${response.statusText}`;
+            }
+            if (typeof detail === 'string') return detail;
+            if (Array.isArray(detail)) {
+                const msgs = detail
+                    .map((d) => (typeof d === 'string' ? d : d?.msg || JSON.stringify(d)))
+                    .filter(Boolean);
+                return msgs.join('; ');
+            }
+            if (typeof detail === 'object' && detail?.msg) return detail.msg;
+            return `${response.status} ${response.statusText}`;
+        } catch {
+            return `${response.status} ${response.statusText}`;
+        }
+    }
     private getAuthHeader(): HeadersInit {
         const token = localStorage.getItem('access_token');
         return {
@@ -54,8 +76,7 @@ class ApiService {
         });
 
         if (!response.ok) {
-            const error = await response.json();
-            throw new Error(error.detail || 'Registration failed');
+            throw new Error(await this.parseErrorMessage(response));
         }
 
         const result: AuthResponse = await response.json();
@@ -79,8 +100,7 @@ class ApiService {
         });
 
         if (!response.ok) {
-            const error = await response.json();
-            throw new Error(error.detail || 'Login failed');
+            throw new Error(await this.parseErrorMessage(response));
         }
 
         const result: AuthResponse = await response.json();
@@ -127,7 +147,7 @@ class ApiService {
         });
 
         if (!response.ok) {
-            throw new Error('Failed to get user info');
+            throw new Error(await this.parseErrorMessage(response));
         }
 
         return await response.json();
@@ -150,7 +170,7 @@ class ApiService {
         });
 
         if (!response.ok) {
-            throw new Error('Failed to refresh token');
+            throw new Error(await this.parseErrorMessage(response));
         }
 
         const result: TokenData = await response.json();
