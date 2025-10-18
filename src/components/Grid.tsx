@@ -1,3 +1,4 @@
+// src/components/Grid.tsx
 import { Box } from '@mui/material';
 
 interface GridProps {
@@ -39,19 +40,36 @@ export const Grid: React.FC<GridProps> = ({
   }
 
   if (item) {
-    const widthMap = {
-      xs: xs ? `${(xs / 12) * 100}%` : '100%',
-      sm: sm ? `${(sm / 12) * 100}%` : undefined,
-      md: md ? `${(md / 12) * 100}%` : undefined,
-      lg: lg ? `${(lg / 12) * 100}%` : undefined,
-    };
+    // Вычисляем ширины отдельно без рекурсивных ссылок
+    const xsWidth = xs ? `${(xs / 12) * 100}%` : '100%';
+    const smWidth = sm ? `${(sm / 12) * 100}%` : xsWidth;
+    const mdWidth = md ? `${(md / 12) * 100}%` : smWidth;
+    const lgWidth = lg ? `${(lg / 12) * 100}%` : mdWidth;
 
     return (
       <Box 
         sx={{ 
           flexGrow: 0,
-          flexBasis: widthMap.xs,
-          maxWidth: widthMap.xs,
+          flexBasis: xsWidth,
+          maxWidth: xsWidth,
+          ...(sm && {
+            '@media (min-width: 600px)': {
+              flexBasis: smWidth,
+              maxWidth: smWidth,
+            }
+          }),
+          ...(md && {
+            '@media (min-width: 900px)': {
+              flexBasis: mdWidth,
+              maxWidth: mdWidth,
+            }
+          }),
+          ...(lg && {
+            '@media (min-width: 1200px)': {
+              flexBasis: lgWidth,
+              maxWidth: lgWidth,
+            }
+          }),
           ...sx 
         }}
       >
