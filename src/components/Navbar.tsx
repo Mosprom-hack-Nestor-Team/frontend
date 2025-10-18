@@ -12,9 +12,16 @@ import {
   ListItemButton,
   ListItemText,
   Stack,
+  Avatar,
+  Menu,
+  MenuItem,
+  Divider,
 } from '@mui/material';
 import MenuIcon from '@mui/icons-material/Menu';
+import PersonIcon from '@mui/icons-material/Person';
+import LogoutIcon from '@mui/icons-material/Logout';
 import { useNavigate, useLocation } from 'react-router-dom';
+import { apiService } from '../services/api';
 
 type NavItem = {
   label: string;
@@ -26,25 +33,59 @@ type NavbarProps = {
     name?: string;
     role?: string;
   };
+  onLogout?: () => void;
 };
 
-export const Navbar: React.FC<NavbarProps> = ({ user }) => {
+export const Navbar: React.FC<NavbarProps> = ({ user, onLogout }) => {
   const navigate = useNavigate();
   const location = useLocation();
   const [drawerOpen, setDrawerOpen] = React.useState(false);
+  const [anchorEl, setAnchorEl] = React.useState<null | HTMLElement>(null);
 
-  const navItems: NavItem[] = [
-    { label: 'Главная', path: '/' },
-    { label: 'Dashboard', path: '/dashboard' },
-    { label: 'О нас', path: '/about' },
-    { label: 'Вход', path: '/login' },
-  ];
+  const navItems: NavItem[] = user
+    ? [
+        { label: 'Главная', path: '/' },
+        { label: 'Dashboard', path: '/dashboard' },
+        { label: 'О нас', path: '/about' },
+      ]
+    : [
+        { label: 'Главная', path: '/' },
+        { label: 'О нас', path: '/about' },
+      ];
 
   const isActive = (path: string) => location.pathname === path;
+
+  const handleMenuOpen = (event: React.MouseEvent<HTMLElement>) => {
+    setAnchorEl(event.currentTarget);
+  };
+
+  const handleMenuClose = () => {
+    setAnchorEl(null);
+  };
+
+  const handleLogout = async () => {
+    handleMenuClose();
+    try {
+      await apiService.logout();
+    } catch (error) {
+      console.error('Logout error:', error);
+    }
+    if (onLogout) onLogout();
+    navigate('/login', { replace: true });
+  };
 
   const handleNavigate = (path: string) => {
     navigate(path);
     setDrawerOpen(false);
+  };
+
+  const getInitials = (name: string) => {
+    return name
+      .split(' ')
+      .map((n) => n[0])
+      .join('')
+      .toUpperCase()
+      .slice(0, 2);
   };
 
   return (
@@ -94,13 +135,78 @@ export const Navbar: React.FC<NavbarProps> = ({ user }) => {
         {/* Right side (desktop) */}
         <Box sx={{ display: { xs: 'none', md: 'flex' }, alignItems: 'center', gap: 2 }}>
           {user ? (
-            <Typography variant="body2" color="text.secondary">
-              {user.name}
-            </Typography>
+            <>
+              <Box
+                onClick={handleMenuOpen}
+                sx={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 1.5,
+                  cursor: 'pointer',
+                  px: 2,
+                  py: 1,
+                  borderRadius: 2,
+                  transition: 'all 0.2s',
+                  '&:hover': {
+                    bgcolor: 'action.hover',
+                  },
+                }}
+              >
+                <Avatar
+                  sx={{
+                    width: 36,
+                    height: 36,
+                    bgcolor: 'primary.main',
+                    fontSize: 14,
+                    fontWeight: 600,
+                  }}
+                >
+                  {getInitials(user.name || 'User')}
+                </Avatar>
+                <Box sx={{ textAlign: 'left' }}>
+                  <Typography variant="body2" sx={{ fontWeight: 600, lineHeight: 1.2 }}>
+                    {user.name}
+                  </Typography>
+                  <Typography variant="caption" color="text.secondary" sx={{ lineHeight: 1 }}>
+                    {user.role}
+                  </Typography>
+                </Box>
+              </Box>
+              <Menu
+                anchorEl={anchorEl}
+                open={Boolean(anchorEl)}
+                onClose={handleMenuClose}
+                anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
+                transformOrigin={{ vertical: 'top', horizontal: 'right' }}
+                PaperProps={{
+                  sx: { mt: 1, minWidth: 200 },
+                }}
+              >
+                <MenuItem
+                  onClick={() => {
+                    handleMenuClose();
+                    navigate('/profile');
+                  }}
+                >
+                  <PersonIcon sx={{ mr: 1.5, fontSize: 20 }} />
+                  Профиль
+                </MenuItem>
+                <Divider />
+                <MenuItem onClick={handleLogout} sx={{ color: 'error.main' }}>
+                  <LogoutIcon sx={{ mr: 1.5, fontSize: 20 }} />
+                  Выход
+                </MenuItem>
+              </Menu>
+            </>
           ) : (
-            <Button size="small" onClick={() => navigate('/login')}>
-              Вход
-            </Button>
+            <>
+              <Button size="small" onClick={() => navigate('/login')} variant="outlined">
+                Вход
+              </Button>
+              <Button size="small" onClick={() => navigate('/register')} variant="contained">
+                Регистрация
+              </Button>
+            </>
           )}
         </Box>
 
@@ -127,6 +233,32 @@ export const Navbar: React.FC<NavbarProps> = ({ user }) => {
               Меню
             </Typography>
 
+            {user && (
+              <Box sx={{ mb: 3, p: 2, bgcolor: 'action.hover', borderRadius: 2 }}>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mb: 1 }}>
+                  <Avatar
+                    sx={{
+                      width: 40,
+                      height: 40,
+                      bgcolor: 'primary.main',
+                      fontSize: 16,
+                      fontWeight: 600,
+                    }}
+                  >
+                    {getInitials(user.name || 'User')}
+                  </Avatar>
+                  <Box>
+                    <Typography variant="body2" sx={{ fontWeight: 600 }}>
+                      {user.name}
+                    </Typography>
+                    <Typography variant="caption" color="text.secondary">
+                      {user.role}
+                    </Typography>
+                  </Box>
+                </Box>
+              </Box>
+            )}
+
             <List>
               {navItems.map((item) => (
                 <ListItem key={item.path} disablePadding>
@@ -139,9 +271,28 @@ export const Navbar: React.FC<NavbarProps> = ({ user }) => {
 
             <Box sx={{ mt: 3 }}>
               {user ? (
-                <Button fullWidth variant="outlined" onClick={() => { navigate('/profile'); setDrawerOpen(false); }}>
-                  Профиль
-                </Button>
+                <Stack spacing={1}>
+                  <Button
+                    fullWidth
+                    variant="outlined"
+                    startIcon={<PersonIcon />}
+                    onClick={() => {
+                      navigate('/profile');
+                      setDrawerOpen(false);
+                    }}
+                  >
+                    Профиль
+                  </Button>
+                  <Button
+                    fullWidth
+                    variant="outlined"
+                    color="error"
+                    startIcon={<LogoutIcon />}
+                    onClick={handleLogout}
+                  >
+                    Выход
+                  </Button>
+                </Stack>
               ) : (
                 <Stack spacing={1}>
                   <Button fullWidth variant="contained" onClick={() => handleNavigate('/login')}>

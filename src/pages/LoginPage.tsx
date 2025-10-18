@@ -7,15 +7,15 @@ import {
   Typography,
   TextField,
   InputAdornment,
-  IconButton,
   Link as MuiLink,
   Button,
   CircularProgress,
+  Alert,
 } from '@mui/material';
 import MailOutlineIcon from '@mui/icons-material/MailOutline';
 import LockIcon from '@mui/icons-material/Lock';
-import { Link, useNavigate } from 'react-router-dom';
-// import { apiService } from '../services/api'; // оставлено как было в твоём проекте
+import { Link } from 'react-router-dom';
+import { apiService } from '../services/api';
 
 type LoginForm = {
   email: string;
@@ -23,22 +23,21 @@ type LoginForm = {
 };
 
 export const LoginPage: React.FC = () => {
-  const navigate = useNavigate();
   const [formData, setFormData] = useState<LoginForm>({ email: '', password: '' });
   const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string>('');
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
+    setError('');
 
     try {
-      // await apiService.login(formData);
-      // временно эмулируем успешный логин
-      await new Promise((r) => setTimeout(r, 700));
-      navigate('/profile');
+      await apiService.login(formData);
+      // Перезагружаем страницу чтобы обновить состояние пользователя
+      window.location.href = '/dashboard';
     } catch (error) {
-      // eslint-disable-next-line no-alert
-      alert(error instanceof Error ? error.message : 'Ошибка входа. Проверьте email и пароль');
+      setError(error instanceof Error ? error.message : 'Ошибка входа. Проверьте email и пароль');
     } finally {
       setIsLoading(false);
     }
@@ -64,6 +63,12 @@ export const LoginPage: React.FC = () => {
               </Typography>
               <Typography color="text.secondary">Добро пожаловать! Войдите, чтобы продолжить</Typography>
             </Box>
+
+            {error && (
+              <Alert severity="error" onClose={() => setError('')}>
+                {error}
+              </Alert>
+            )}
 
             <Box component="form" onSubmit={handleSubmit}>
               <Stack spacing={2}>

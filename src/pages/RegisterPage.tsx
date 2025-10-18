@@ -10,11 +10,12 @@ import {
   Button,
   CircularProgress,
   Link as MuiLink,
+  Alert,
 } from '@mui/material';
 import PersonIcon from '@mui/icons-material/Person';
 import MailOutlineIcon from '@mui/icons-material/MailOutline';
 import LockIcon from '@mui/icons-material/Lock';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { apiService } from '../services/api';
 
 type RegisterForm = {
@@ -24,20 +25,21 @@ type RegisterForm = {
 };
 
 export const RegisterPage: React.FC = () => {
-  const navigate = useNavigate();
   const [formData, setFormData] = useState<RegisterForm>({ name: '', email: '', password: '' });
   const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string>('');
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
+    setError('');
 
     try {
       await apiService.register(formData);
-      navigate('/profile');
+      // Перезагружаем страницу чтобы обновить состояние пользователя
+      window.location.href = '/dashboard';
     } catch (error) {
-      // eslint-disable-next-line no-alert
-      alert(error instanceof Error ? error.message : 'Ошибка регистрации');
+      setError(error instanceof Error ? error.message : 'Ошибка регистрации');
     } finally {
       setIsLoading(false);
     }
@@ -59,6 +61,12 @@ export const RegisterPage: React.FC = () => {
               </Typography>
               <Typography color="text.secondary">Присоединяйтесь к нам и начните работу</Typography>
             </Box>
+
+            {error && (
+              <Alert severity="error" onClose={() => setError('')}>
+                {error}
+              </Alert>
+            )}
 
             <Box component="form" onSubmit={handleSubmit}>
               <Stack spacing={2}>
