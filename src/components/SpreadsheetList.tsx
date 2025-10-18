@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+﻿import React, { useState, useEffect } from 'react';
 import {
     Box,
     Card,
@@ -23,9 +23,12 @@ import {
     Delete as DeleteIcon,
     Edit as EditIcon,
     MoreVert as MoreVertIcon,
-} from '@mui/icons-material';
+    } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
 import { apiService, type SpreadsheetInfo, type SpreadsheetCreate } from '../services/api';
+
+import CloudUploadIcon from '@mui/icons-material/CloudUpload';
+import FileDownloadIcon from '@mui/icons-material/FileDownload';
 
 export const SpreadsheetList: React.FC = () => {
     const navigate = useNavigate();
@@ -163,7 +166,7 @@ export const SpreadsheetList: React.FC = () => {
     }
 
     return (
-        <Box>
+        <Box>            
             <Box display="flex" justifyContent="space-between" alignItems="center" mb={4}>
                 <Typography 
                     variant="h4" 
@@ -174,28 +177,36 @@ export const SpreadsheetList: React.FC = () => {
                 >
                     Мои таблицы
                 </Typography>
-                <Button
-                    variant="contained"
-                    startIcon={<AddIcon />}
-                    onClick={() => setCreateDialogOpen(true)}
-                    sx={{
-                        background: 'linear-gradient(135deg, #002664 0%, #0f4dbc 100%)',
-                        borderRadius: 2,
-                        px: 3,
-                        py: 1,
-                        fontSize: '1rem',
-                        fontWeight: 600,
-                        boxShadow: '0 4px 15px rgba(0, 38, 100, 0.3)',
-                        '&:hover': {
-                            background: 'linear-gradient(135deg, #0f4dbc 0%, #002664 100%)',
-                            boxShadow: '0 6px 20px rgba(0, 38, 100, 0.4)',
-                            transform: 'translateY(-2px)',
-                        },
-                        transition: 'all 0.3s ease-in-out',
-                    }}
-                >
-                    Создать таблицу
-                </Button>
+                                <Box sx={{ display: 'flex', gap: 1 }}>
+                    <input
+                        id="excel-import-input"
+                        type="file"
+                        accept=".xlsx"
+                        style={{ display: 'none' }}
+                        onChange={async (e) => {
+                            const file = (e.target as HTMLInputElement).files?.[0];
+                            if (!file) return;
+                            try {
+                                const created = await apiService.importSpreadsheetExcel(file);
+                                setSpreadsheets((prev) => [created, ...prev]);
+                            } catch (err) {
+                                alert((err as any)?.message || 'Не удалось импортировать Excel');
+                            } finally {
+                                (e.target as HTMLInputElement).value = '';
+                            }
+                        }}
+                    />
+                    <label htmlFor="excel-import-input">
+                        <Button variant="outlined" component="span" startIcon={<CloudUploadIcon />}>Импорт Excel</Button>
+                    </label>
+                    <Button
+                        variant="contained"
+                        startIcon={<AddIcon />}
+                        onClick={() => setCreateDialogOpen(true)}
+                    >
+                        Создать таблицу
+                    </Button>
+                </Box>
             </Box>
 
             {spreadsheets.length === 0 ? (
@@ -463,7 +474,30 @@ export const SpreadsheetList: React.FC = () => {
                         Удалить
                     </MenuItem>
                 )}
-            </Menu>
+                            <MenuItem
+                    onClick={async () => {
+                        if (!selectedSpreadsheet) return;
+                        try {
+                            const blob = await apiService.exportSpreadsheetExcel(selectedSpreadsheet.id);
+                            const url = URL.createObjectURL(blob);
+                            const a = document.createElement('a');
+                            a.href = url;
+                            a.download = `${selectedSpreadsheet.title || 'export'}.xlsx`;
+                            document.body.appendChild(a);
+                            a.click();
+                            a.remove();
+                            URL.revokeObjectURL(url);
+                        } catch (err) {
+                            alert((err as any)?.message || 'Не удалось экспортировать Excel');
+                        } finally {
+                            handleMenuClose();
+                        }
+                    }}
+                    sx={{ fontSize: '0.9rem', fontWeight: 500 }}
+                >
+                    <FileDownloadIcon fontSize="small" sx={{ mr: 1 }} />
+                    Экспорт в Excel
+                </MenuItem></Menu>
         </Box>
     );
 };
