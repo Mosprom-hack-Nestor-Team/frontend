@@ -20,6 +20,7 @@ import {
 import MenuIcon from '@mui/icons-material/Menu';
 import PersonIcon from '@mui/icons-material/Person';
 import LogoutIcon from '@mui/icons-material/Logout';
+import TableChartIcon from '@mui/icons-material/TableChart';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { apiService } from '../services/api';
 
@@ -89,41 +90,91 @@ export const Navbar: React.FC<NavbarProps> = ({ user, onLogout }) => {
   };
 
   return (
-    <AppBar position="sticky" color="default" elevation={2}>
-      <Toolbar sx={{ maxWidth: '1400px', mx: 'auto', width: '100%', px: 2 }}>
+    <AppBar 
+      position="sticky" 
+      elevation={1}
+      sx={{
+        background: 'linear-gradient(135deg, #002664 0%, #0f4dbc 100%)',
+        borderBottom: `2px solid rgba(135, 200, 220, 0.3)`,
+      }}
+    >
+      <Toolbar sx={{ maxWidth: '1400px', mx: 'auto', width: '100%', px: { xs: 2, md: 3 } }}>
+        {/* Логотип Nestor Team */}
         <Box
           sx={{
             display: 'flex',
             alignItems: 'center',
             cursor: 'pointer',
-            mr: 2,
+            mr: 3,
           }}
           onClick={() => navigate('/')}
         >
-          <Typography
-            variant="h6"
+          <Box
             sx={{
-              background: 'linear-gradient(90deg,#60a5fa 0%, #8b5cf6 100%)',
-              WebkitBackgroundClip: 'text',
-              WebkitTextFillColor: 'transparent',
-              fontWeight: 700,
+              background: 'linear-gradient(135deg, #87c8dc 0%, #a5d6e5 100%)',
+              borderRadius: 2,
+              p: 1,
+              mr: 2,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
             }}
           >
-            MyApp
+            <TableChartIcon sx={{ color: '#002664', fontSize: 28 }} />
+          </Box>
+          <Typography
+            variant="h5"
+            sx={{
+              background: 'linear-gradient(45deg, #ffffff 30%, #87c8dc 90%)',
+              backgroundClip: 'text',
+              WebkitBackgroundClip: 'text',
+              color: 'transparent',
+              fontWeight: 800,
+              fontSize: { xs: '1.25rem', md: '1.5rem' },
+              letterSpacing: '0.5px',
+            }}
+          >
+            Nestor Team
           </Typography>
         </Box>
 
         {/* Desktop nav */}
-        <Box sx={{ flex: 1, display: { xs: 'none', md: 'flex' }, justifyContent: 'center' }}>
+        <Box 
+          sx={{ 
+            flex: 1, 
+            display: { xs: 'none', md: 'flex' }, 
+            justifyContent: 'center',
+          }}
+        >
           <Stack direction="row" spacing={1}>
-            {navItems.map((item) => (
+            {navItems.map((item, index) => (
               <Button
                 key={item.path}
                 onClick={() => handleNavigate(item.path)}
                 variant={isActive(item.path) ? 'contained' : 'text'}
-                color={isActive(item.path) ? 'primary' : 'inherit'}
                 sx={{
                   textTransform: 'none',
+                  fontWeight: 600,
+                  fontSize: '1rem',
+                  px: 3,
+                  py: 1,
+                  borderRadius: 2,
+                  ...(isActive(item.path) 
+                    ? {
+                        background: 'linear-gradient(135deg, #87c8dc 0%, #a5d6e5 100%)',
+                        color: '#002664',
+                        '&:hover': {
+                          background: 'linear-gradient(135deg, #a5d6e5 0%, #87c8dc 100%)',
+                        }
+                      }
+                    : {
+                        color: 'white',
+                        '&:hover': {
+                          backgroundColor: 'rgba(255, 255, 255, 0.15)',
+                        }
+                      }
+                  ),
+                  transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
                 }}
               >
                 {item.label}
@@ -133,7 +184,13 @@ export const Navbar: React.FC<NavbarProps> = ({ user, onLogout }) => {
         </Box>
 
         {/* Right side (desktop) */}
-        <Box sx={{ display: { xs: 'none', md: 'flex' }, alignItems: 'center', gap: 2 }}>
+        <Box 
+          sx={{ 
+            display: { xs: 'none', md: 'flex' }, 
+            alignItems: 'center', 
+            gap: 2,
+          }}
+        >
           {user ? (
             <>
               <Box
@@ -146,28 +203,29 @@ export const Navbar: React.FC<NavbarProps> = ({ user, onLogout }) => {
                   px: 2,
                   py: 1,
                   borderRadius: 2,
-                  transition: 'all 0.2s',
+                  transition: 'all 0.3s ease-in-out',
                   '&:hover': {
-                    bgcolor: 'action.hover',
+                    backgroundColor: 'rgba(255, 255, 255, 0.1)',
                   },
                 }}
               >
                 <Avatar
                   sx={{
-                    width: 36,
-                    height: 36,
-                    bgcolor: 'primary.main',
-                    fontSize: 14,
-                    fontWeight: 600,
+                    width: 40,
+                    height: 40,
+                    background: 'linear-gradient(135deg, #87c8dc 0%, #a5d6e5 100%)',
+                    fontSize: 16,
+                    fontWeight: 700,
+                    color: '#002664',
                   }}
                 >
                   {getInitials(user.name || 'User')}
                 </Avatar>
                 <Box sx={{ textAlign: 'left' }}>
-                  <Typography variant="body2" sx={{ fontWeight: 600, lineHeight: 1.2 }}>
+                  <Typography variant="body2" sx={{ fontWeight: 600, lineHeight: 1.2, color: 'white' }}>
                     {user.name}
                   </Typography>
-                  <Typography variant="caption" color="text.secondary" sx={{ lineHeight: 1 }}>
+                  <Typography variant="caption" sx={{ lineHeight: 1, color: 'rgba(255, 255, 255, 0.8)' }}>
                     {user.role}
                   </Typography>
                 </Box>
@@ -179,7 +237,13 @@ export const Navbar: React.FC<NavbarProps> = ({ user, onLogout }) => {
                 anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
                 transformOrigin={{ vertical: 'top', horizontal: 'right' }}
                 PaperProps={{
-                  sx: { mt: 1, minWidth: 200 },
+                  sx: { 
+                    mt: 1, 
+                    minWidth: 200,
+                    borderRadius: 2,
+                    background: 'linear-gradient(135deg, #ffffff 0%, #f8fafc 100%)',
+                    border: '1px solid rgba(135, 200, 220, 0.3)',
+                  },
                 }}
               >
                 <MenuItem
@@ -187,26 +251,74 @@ export const Navbar: React.FC<NavbarProps> = ({ user, onLogout }) => {
                     handleMenuClose();
                     navigate('/profile');
                   }}
+                  sx={{
+                    '&:hover': {
+                      backgroundColor: 'rgba(135, 200, 220, 0.1)',
+                    }
+                  }}
                 >
-                  <PersonIcon sx={{ mr: 1.5, fontSize: 20 }} />
-                  Профиль
+                  <PersonIcon sx={{ mr: 1.5, fontSize: 20, color: '#002664' }} />
+                  <Typography sx={{ color: '#002664', fontWeight: 500 }}>
+                    Профиль
+                  </Typography>
                 </MenuItem>
-                <Divider />
-                <MenuItem onClick={handleLogout} sx={{ color: 'error.main' }}>
+                <Divider sx={{ my: 1, backgroundColor: 'rgba(135, 200, 220, 0.3)' }} />
+                <MenuItem 
+                  onClick={handleLogout} 
+                  sx={{ 
+                    color: '#eb735a',
+                    '&:hover': {
+                      backgroundColor: 'rgba(235, 115, 90, 0.1)',
+                    }
+                  }}
+                >
                   <LogoutIcon sx={{ mr: 1.5, fontSize: 20 }} />
-                  Выход
+                  <Typography sx={{ fontWeight: 500 }}>
+                    Выход
+                  </Typography>
                 </MenuItem>
               </Menu>
             </>
           ) : (
-            <>
-              <Button size="small" onClick={() => navigate('/login')} variant="outlined">
+            <Stack direction="row" spacing={2}>
+              <Button 
+                size="medium" 
+                onClick={() => navigate('/login')} 
+                variant="outlined"
+                sx={{
+                  color: 'white',
+                  borderColor: 'white',
+                  fontWeight: 600,
+                  borderRadius: 2,
+                  px: 3,
+                  '&:hover': {
+                    backgroundColor: 'rgba(255, 255, 255, 0.15)',
+                    borderColor: '#87c8dc',
+                  },
+                  transition: 'all 0.3s ease-in-out',
+                }}
+              >
                 Вход
               </Button>
-              <Button size="small" onClick={() => navigate('/register')} variant="contained">
+              <Button 
+                size="medium" 
+                onClick={() => navigate('/register')} 
+                variant="contained"
+                sx={{
+                  background: 'linear-gradient(135deg, #87c8dc 0%, #a5d6e5 100%)',
+                  color: '#002664',
+                  fontWeight: 600,
+                  borderRadius: 2,
+                  px: 3,
+                  '&:hover': {
+                    background: 'linear-gradient(135deg, #a5d6e5 0%, #87c8dc 100%)',
+                  },
+                  transition: 'all 0.3s ease-in-out',
+                }}
+              >
                 Регистрация
               </Button>
-            </>
+            </Stack>
           )}
         </Box>
 
@@ -216,6 +328,12 @@ export const Navbar: React.FC<NavbarProps> = ({ user, onLogout }) => {
             aria-label="open menu"
             onClick={() => setDrawerOpen(true)}
             size="large"
+            sx={{
+              color: 'white',
+              '&:hover': {
+                backgroundColor: 'rgba(255, 255, 255, 0.15)',
+              }
+            }}
           >
             <MenuIcon />
           </IconButton>
@@ -227,31 +345,42 @@ export const Navbar: React.FC<NavbarProps> = ({ user, onLogout }) => {
           open={drawerOpen}
           onClose={() => setDrawerOpen(false)}
           ModalProps={{ keepMounted: true }}
+          PaperProps={{
+            sx: {
+              background: 'linear-gradient(135deg, #002664 0%, #0f4dbc 100%)',
+              color: 'white',
+            }
+          }}
         >
-          <Box sx={{ width: 280, p: 2, height: '100%' }} role="presentation">
-            <Typography variant="h6" sx={{ mb: 2 }}>
-              Меню
-            </Typography>
+          <Box sx={{ width: 280, p: 3, height: '100%' }} role="presentation">
+            {/* Заголовок в Drawer */}
+            <Box sx={{ display: 'flex', alignItems: 'center', mb: 4 }}>
+              <TableChartIcon sx={{ mr: 2, color: '#87c8dc', fontSize: 32 }} />
+              <Typography variant="h6" sx={{ fontWeight: 700, color: 'white' }}>
+                Nestor Team
+              </Typography>
+            </Box>
 
             {user && (
-              <Box sx={{ mb: 3, p: 2, bgcolor: 'action.hover', borderRadius: 2 }}>
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mb: 1 }}>
+              <Box sx={{ mb: 4, p: 3, backgroundColor: 'rgba(255, 255, 255, 0.1)', borderRadius: 2 }}>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 1 }}>
                   <Avatar
                     sx={{
-                      width: 40,
-                      height: 40,
-                      bgcolor: 'primary.main',
-                      fontSize: 16,
-                      fontWeight: 600,
+                      width: 48,
+                      height: 48,
+                      background: 'linear-gradient(135deg, #87c8dc 0%, #a5d6e5 100%)',
+                      fontSize: 18,
+                      fontWeight: 700,
+                      color: '#002664',
                     }}
                   >
                     {getInitials(user.name || 'User')}
                   </Avatar>
                   <Box>
-                    <Typography variant="body2" sx={{ fontWeight: 600 }}>
+                    <Typography variant="body1" sx={{ fontWeight: 600, color: 'white' }}>
                       {user.name}
                     </Typography>
-                    <Typography variant="caption" color="text.secondary">
+                    <Typography variant="caption" sx={{ color: 'rgba(255, 255, 255, 0.8)' }}>
                       {user.role}
                     </Typography>
                   </Box>
@@ -261,17 +390,42 @@ export const Navbar: React.FC<NavbarProps> = ({ user, onLogout }) => {
 
             <List>
               {navItems.map((item) => (
-                <ListItem key={item.path} disablePadding>
-                  <ListItemButton onClick={() => handleNavigate(item.path)} selected={isActive(item.path)}>
-                    <ListItemText primary={item.label} />
+                <ListItem key={item.path} disablePadding sx={{ mb: 1 }}>
+                  <ListItemButton 
+                    onClick={() => handleNavigate(item.path)} 
+                    selected={isActive(item.path)}
+                    sx={{
+                      borderRadius: 2,
+                      mb: 1,
+                      backgroundColor: isActive(item.path) ? 'rgba(135, 200, 220, 0.3)' : 'transparent',
+                      '&:hover': {
+                        backgroundColor: 'rgba(255, 255, 255, 0.1)',
+                      },
+                      '&.Mui-selected': {
+                        backgroundColor: 'rgba(135, 200, 220, 0.3)',
+                        '&:hover': {
+                          backgroundColor: 'rgba(135, 200, 220, 0.4)',
+                        }
+                      }
+                    }}
+                  >
+                    <ListItemText 
+                      primary={item.label} 
+                      primaryTypographyProps={{
+                        sx: { 
+                          fontWeight: 600,
+                          color: isActive(item.path) ? '#87c8dc' : 'white'
+                        }
+                      }}
+                    />
                   </ListItemButton>
                 </ListItem>
               ))}
             </List>
 
-            <Box sx={{ mt: 3 }}>
+            <Box sx={{ mt: 4 }}>
               {user ? (
-                <Stack spacing={1}>
+                <Stack spacing={2}>
                   <Button
                     fullWidth
                     variant="outlined"
@@ -279,6 +433,15 @@ export const Navbar: React.FC<NavbarProps> = ({ user, onLogout }) => {
                     onClick={() => {
                       navigate('/profile');
                       setDrawerOpen(false);
+                    }}
+                    sx={{
+                      color: 'white',
+                      borderColor: 'white',
+                      borderRadius: 2,
+                      '&:hover': {
+                        backgroundColor: 'rgba(255, 255, 255, 0.1)',
+                        borderColor: '#87c8dc',
+                      }
                     }}
                   >
                     Профиль
@@ -289,16 +452,50 @@ export const Navbar: React.FC<NavbarProps> = ({ user, onLogout }) => {
                     color="error"
                     startIcon={<LogoutIcon />}
                     onClick={handleLogout}
+                    sx={{
+                      borderColor: '#eb735a',
+                      color: '#eb735a',
+                      borderRadius: 2,
+                      '&:hover': {
+                        backgroundColor: 'rgba(235, 115, 90, 0.1)',
+                        borderColor: '#eb735a',
+                      }
+                    }}
                   >
                     Выход
                   </Button>
                 </Stack>
               ) : (
-                <Stack spacing={1}>
-                  <Button fullWidth variant="contained" onClick={() => handleNavigate('/login')}>
+                <Stack spacing={2}>
+                  <Button 
+                    fullWidth 
+                    variant="contained" 
+                    onClick={() => handleNavigate('/login')}
+                    sx={{
+                      background: 'linear-gradient(135deg, #87c8dc 0%, #a5d6e5 100%)',
+                      color: '#002664',
+                      fontWeight: 600,
+                      borderRadius: 2,
+                      '&:hover': {
+                        background: 'linear-gradient(135deg, #a5d6e5 0%, #87c8dc 100%)',
+                      }
+                    }}
+                  >
                     Войти
                   </Button>
-                  <Button fullWidth variant="text" onClick={() => handleNavigate('/register')}>
+                  <Button 
+                    fullWidth 
+                    variant="outlined" 
+                    onClick={() => handleNavigate('/register')}
+                    sx={{
+                      color: 'white',
+                      borderColor: 'white',
+                      borderRadius: 2,
+                      '&:hover': {
+                        backgroundColor: 'rgba(255, 255, 255, 0.1)',
+                      }
+                    }}
+                  >
                     Регистрация
                   </Button>
                 </Stack>

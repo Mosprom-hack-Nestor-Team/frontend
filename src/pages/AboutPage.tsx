@@ -5,158 +5,396 @@ import {
   Typography,
   Stack,
   Paper,
-  Grid,
-  Avatar,
   Chip,
   useTheme,
 } from '@mui/material';
-import CheckCircleIcon from '@mui/icons-material/CheckCircle';
+import AeroLinesBackground from '../components/AeroLinesBackground';
 
-interface TeamMemberProps {
-  name: string;
-  role: string;
-}
-
-const TeamMember: React.FC<TeamMemberProps> = ({ name, role }) => {
-  const getInitials = (nameStr: string) =>
-    nameStr
-      .split(' ')
-      .map((n) => n[0])
-      .join('')
-      .toUpperCase();
-
-  return (
-    <Paper
-      elevation={2}
-      sx={{
-        p: 3,
-        borderRadius: 2,
-        '&:hover': { transform: 'translateY(-4px)', boxShadow: 6 },
-        transition: 'transform 0.18s ease',
-      }}
-    >
-      <Stack alignItems="center" spacing={2}>
-        <Avatar sx={{ width: 64, height: 64, bgcolor: 'primary.main', fontWeight: 700 }}>
-          {getInitials(name)}
-        </Avatar>
-
-        <Box textAlign="center">
-          <Typography variant="subtitle1" fontWeight={700}>
-            {name}
-          </Typography>
-          <Typography variant="body2" color="text.secondary">
-            {role}
-          </Typography>
-        </Box>
-      </Stack>
-    </Paper>
-  );
-};
+// Иконки
+import DashboardIcon from '@mui/icons-material/Dashboard';
+import SpeedIcon from '@mui/icons-material/Speed';
+import SecurityIcon from '@mui/icons-material/Security';
+import SupportAgentIcon from '@mui/icons-material/SupportAgent';
+import AttachMoneyIcon from '@mui/icons-material/AttachMoney';
+import RocketLaunchIcon from '@mui/icons-material/RocketLaunch';
+import AutoAwesomeIcon from '@mui/icons-material/AutoAwesome';
+import PsychologyIcon from '@mui/icons-material/Psychology';
 
 export const AboutPage: React.FC = () => {
   const theme = useTheme();
 
   const advantages = [
-    'Интуитивно понятный интерфейс',
-    'Быстрая обработка больших объемов данных',
-    'Надежная защита и шифрование информации',
-    'Круглосуточная техническая поддержка',
-    'Гибкая система тарификации',
+    {
+      text: 'Интуитивно понятный интерфейс',
+      icon: <DashboardIcon sx={{ fontSize: 32 }} />,
+      color: '#002664'
+    },
+    {
+      text: 'Искусственный интеллект для анализа данных',
+      icon: <PsychologyIcon sx={{ fontSize: 32 }} />,
+      color: '#0f4dbc'
+    },
+    {
+      text: 'Быстрая обработка больших объемов данных',
+      icon: <SpeedIcon sx={{ fontSize: 32 }} />,
+      color: '#00afa5'
+    },
+    {
+      text: 'Надежная защита и шифрование информации',
+      icon: <SecurityIcon sx={{ fontSize: 32 }} />,
+      color: '#87c8dc'
+    },
+    {
+      text: 'Круглосуточная техническая поддержка',
+      icon: <SupportAgentIcon sx={{ fontSize: 32 }} />,
+      color: '#002664'
+    },
+    {
+      text: 'Гибкая система тарификации',
+      icon: <AttachMoneyIcon sx={{ fontSize: 32 }} />,
+      color: '#0f4dbc'
+    },
   ];
 
-  const team = [
-    { name: 'Алексей Иванов', role: 'CEO & Founder' },
-    { name: 'Мария Петрова', role: 'CTO' },
-    { name: 'Дмитрий Сидоров', role: 'Lead Developer' },
-    { name: 'Елена Козлова', role: 'UI/UX Designer' },
-  ];
-
-  const technologies = ['React', 'TypeScript', 'MUI', 'FastAPI', 'PostgreSQL', 'Docker'];
+  const technologies = ['React', 'TypeScript', 'MUI', 'FastAPI', 'Docker', 'AI/ML', 'Python'];
+  const aiFeatures = ['Авто-аналитика', 'Прогнозирование', 'Умные рекомендации', 'NLP обработка', 'Компьютерное зрение'];
 
   return (
-    <Container maxWidth="xl" sx={{ py: { xs: 6, md: 10 } }}>
-      <Stack spacing={6}>
-        {/* Header */}
-        <Box textAlign="center">
-          <Typography
-            variant="h3"
-            sx={{
-              fontSize: { xs: '1.75rem', md: '2.5rem' },
-              fontWeight: 800,
-              background: 'linear-gradient(90deg,#60a5fa 0%, #8b5cf6 100%)',
-              WebkitBackgroundClip: 'text',
-              WebkitTextFillColor: 'transparent',
-              mb: 1,
+    <Box sx={{ position: 'relative', minHeight: '100vh' }}>
+      <AeroLinesBackground />
+      
+      <Container maxWidth="xl" sx={{ py: { xs: 6, md: 10 }, position: 'relative' }}>
+        <Stack spacing={8} alignItems="center">
+          
+          {/* Заголовок страницы */}
+          <Box textAlign="center">
+            <Typography
+              variant="h3"
+              sx={{
+                fontSize: { xs: '1.75rem', md: '2.5rem' },
+                fontWeight: 700,
+                background: 'linear-gradient(135deg, #002664 0%, #0f4dbc 100%)',
+                backgroundClip: 'text',
+                WebkitBackgroundClip: 'text',
+                color: 'transparent',
+                mb: 2,
+              }}
+            >
+              О нашем проекте
+            </Typography>
+
+            <Typography 
+              variant="h6" 
+              color="text.secondary" 
+              sx={{ 
+                maxWidth: 900, 
+                mx: 'auto',
+                fontWeight: 400,
+              }}
+            >
+              Мы создаем инновационные решения для бизнеса, используя современные технологии
+              и лучшие практики разработки.
+            </Typography>
+          </Box>
+
+          {/* Блок миссии */}
+          <Paper 
+            elevation={0}
+            sx={{ 
+              p: { xs: 4, md: 6 }, 
+              borderRadius: 3,
+              background: 'linear-gradient(135deg, #ffffff 0%, #fafbfc 100%)',
+              border: '1px solid',
+              borderColor: 'rgba(0, 38, 100, 0.1)',
+              boxShadow: '0 4px 20px rgba(0, 38, 100, 0.08)',
+              width: '100%',
+              maxWidth: 1200,
             }}
           >
-            О нашем проекте
-          </Typography>
-
-          <Typography variant="body1" color="text.secondary" sx={{ maxWidth: 900, mx: 'auto' }}>
-            Мы создаем инновационные решения для бизнеса, используя современные технологии
-            и лучшие практики разработки.
-          </Typography>
-        </Box>
-
-        {/* Mission + Advantages */}
-        <Paper elevation={3} sx={{ p: { xs: 3, md: 6 }, borderRadius: 2 }}>
-          <Stack spacing={3}>
-            <Typography variant="h5">Наша миссия</Typography>
-            <Typography color="text.secondary">
-              Предоставить доступные и эффективные инструменты для управления данными,
-              которые помогут компаниям любого размера принимать обоснованные решения
-              на основе аналитики. Мы верим в силу данных и стремимся сделать их
-              использование простым и интуитивным.
-            </Typography>
-
-            <Box sx={{ borderTop: `1px solid ${theme.palette.divider}`, pt: 3 }}>
-              <Typography variant="h6" mb={2}>
-                Наши преимущества
+            <Box textAlign="center">
+              <Typography 
+                variant="h4" 
+                sx={{ 
+                  fontWeight: 700,
+                  color: '#002664',
+                  mb: 3,
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 2,
+                  justifyContent: 'center'
+                }}
+              >
+                <RocketLaunchIcon sx={{ fontSize: 40, color: '#002664' }} />
+                Наша миссия
               </Typography>
-
-              <Stack spacing={1}>
-                {advantages.map((adv, idx) => (
-                  <Stack key={idx} direction="row" alignItems="center" spacing={1}>
-                    <CheckCircleIcon sx={{ color: 'success.main', fontSize: 20 }} />
-                    <Typography>{adv}</Typography>
-                  </Stack>
-                ))}
-              </Stack>
+              
+              <Typography 
+                variant="body1" 
+                color="text.secondary" 
+                sx={{ 
+                  lineHeight: 1.8,
+                  fontSize: '1.1rem',
+                  textAlign: 'center',
+                  maxWidth: 1000,
+                  mx: 'auto',
+                }}
+              >
+                Предоставить доступные и эффективные инструменты для управления данными,
+                которые помогут компаниям любого размера принимать обоснованные решения
+                на основе аналитики. Мы верим в силу данных и стремимся сделать их
+                использование простым и интуитивным.
+              </Typography>
             </Box>
-          </Stack>
-        </Paper>
+          </Paper>
 
-        {/* Team */}
-        <Box>
-          <Typography variant="h5" textAlign="center" mb={1}>
-            Наша команда
-          </Typography>
-          <Typography variant="body2" color="text.secondary" textAlign="center" mb={3}>
-            Профессионалы, которые создают будущее
-          </Typography>
-
-          
-        </Box>
-
-        {/* Technologies */}
-        <Paper elevation={2} sx={{ p: 3, borderRadius: 2, bgcolor: 'purple.50' }}>
-          <Stack spacing={2}>
-            <Typography variant="h6">🚀 Технологии</Typography>
-            <Typography color="text.secondary">
-              Мы используем современный стек технологий: React, TypeScript, MUI,
-              FastAPI, PostgreSQL и многое другое. Наш код соответствует лучшим практикам
-              и постоянно совершенствуется.
+          {/* Преимущества */}
+          <Box sx={{ width: '100%' }}>
+            <Typography 
+              variant="h3" 
+              mb={6}
+              sx={{ 
+                fontWeight: 700,
+                color: '#002664',
+                textAlign: 'center'
+              }}
+            >
+              Наши преимущества
             </Typography>
 
-            <Box sx={{ mt: 1, display: 'flex', gap: 1, flexWrap: 'wrap' }}>
-              {technologies.map((tech, i) => (
-                <Chip key={i} label={tech} color="primary" variant="filled" />
+            <Box
+              sx={{
+                display: 'grid',
+                gridTemplateColumns: {
+                  xs: '1fr',
+                  md: 'repeat(2, 1fr)',
+                  lg: 'repeat(3, 1fr)'
+                },
+                gap: 4,
+                maxWidth: 1200,
+                mx: 'auto',
+              }}
+            >
+              {advantages.map((advantage, idx) => (
+                <Paper
+                  key={idx}
+                  elevation={0}
+                  sx={{
+                    p: 4,
+                    borderRadius: 3,
+                    background: 'linear-gradient(135deg, #ffffff 0%, #f8fafc 100%)',
+                    border: '2px solid',
+                    borderColor: 'rgba(135, 200, 220, 0.3)',
+                    transition: 'all 0.3s ease-in-out',
+                    cursor: 'pointer',
+                    '&:hover': {
+                      transform: 'translateY(-4px)',
+                      borderColor: advantage.color,
+                      background: `linear-gradient(135deg, #ffffff 0%, ${advantage.color}08 100%)`,
+                    },
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'center',
+                    textAlign: 'center',
+                    gap: 3,
+                  }}
+                >
+                  <Box
+                    sx={{
+                      width: 80,
+                      height: 80,
+                      borderRadius: '50%',
+                      background: `linear-gradient(135deg, ${advantage.color} 0%, ${advantage.color}99 100%)`,
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      color: 'white',
+                    }}
+                  >
+                    {advantage.icon}
+                  </Box>
+                  
+                  <Typography 
+                    variant="h6" 
+                    sx={{ 
+                      fontWeight: 600,
+                      color: '#002664',
+                      lineHeight: 1.4
+                    }}
+                  >
+                    {advantage.text}
+                  </Typography>
+                </Paper>
               ))}
             </Box>
-          </Stack>
-        </Paper>
-      </Stack>
-    </Container>
+          </Box>
+
+          {/* Блок ИИ */}
+          <Paper 
+            elevation={0}
+            sx={{ 
+              p: 5, 
+              borderRadius: 3, 
+              background: 'linear-gradient(135deg, rgba(0, 38, 100, 0.05) 0%, rgba(15, 77, 188, 0.08) 100%)',
+              border: '2px solid rgba(0, 38, 100, 0.2)',
+              width: '100%',
+              maxWidth: 1000,
+            }}
+          >
+            <Stack spacing={4} alignItems="center">
+              <Box
+                sx={{
+                  width: 100,
+                  height: 100,
+                  borderRadius: '50%',
+                  background: 'linear-gradient(135deg, #002664 0%, #0f4dbc 100%)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  color: 'white',
+                  mb: 2,
+                }}
+              >
+                <AutoAwesomeIcon sx={{ fontSize: 48 }} />
+              </Box>
+              
+              <Typography 
+                variant="h3"
+                sx={{
+                  fontWeight: 800,
+                  background: 'linear-gradient(135deg, #002664 0%, #0f4dbc 100%)',
+                  backgroundClip: 'text',
+                  WebkitBackgroundClip: 'text',
+                  color: 'transparent',
+                  textAlign: 'center',
+                }}
+              >
+                Искусственный Интеллект
+              </Typography>
+              
+              <Typography 
+                variant="h6" 
+                color="text.secondary"
+                sx={{ 
+                  textAlign: 'center',
+                  maxWidth: 800,
+                  mx: 'auto',
+                  lineHeight: 1.7,
+                  fontWeight: 500,
+                }}
+              >
+                Наша платформа использует передовые алгоритмы машинного обучения для 
+                автоматического анализа данных, прогнозирования трендов и генерации 
+                умных рекомендаций
+              </Typography>
+
+              <Box 
+                sx={{ 
+                  display: 'flex', 
+                  gap: 2, 
+                  flexWrap: 'wrap',
+                  justifyContent: 'center',
+                  mt: 2,
+                }}
+              >
+                {aiFeatures.map((feature, i) => (
+                  <Chip 
+                    key={i} 
+                    label={feature} 
+                    sx={{
+                      background: 'linear-gradient(135deg, #002664 0%, #0f4dbc 100%)',
+                      color: 'white',
+                      fontWeight: 600,
+                      px: 3,
+                      py: 1.5,
+                      fontSize: '0.9rem',
+                      transition: 'all 0.2s ease-in-out',
+                      '&:hover': {
+                        background: 'linear-gradient(135deg, #0f4dbc 0%, #002664 100%)',
+                      },
+                    }}
+                  />
+                ))}
+              </Box>
+            </Stack>
+          </Paper>
+
+          {/* Технологический стек - ЦЕНТРИРОВАННЫЙ */}
+          <Paper 
+            elevation={0}
+            sx={{ 
+              p: 5, 
+              borderRadius: 3, 
+              background: 'linear-gradient(135deg, rgba(135, 200, 220, 0.15) 0%, rgba(15, 77, 188, 0.08) 100%)',
+              border: '2px solid rgba(135, 200, 220, 0.4)',
+              width: '100%',
+              maxWidth: 1000,
+            }}
+          >
+            <Stack spacing={4} alignItems="center">
+              <Typography 
+                variant="h4"
+                sx={{
+                  fontWeight: 700,
+                  color: '#002664',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 2,
+                  justifyContent: 'center'
+                }}
+              >
+                <RocketLaunchIcon sx={{ fontSize: 36, color: '#002664' }} />
+                Технологический стек
+              </Typography>
+              
+              <Typography 
+                variant="body1" 
+                color="text.secondary"
+                sx={{ 
+                  fontSize: '1.1rem',
+                  textAlign: 'center',
+                  maxWidth: 800,
+                  mx: 'auto',
+                  lineHeight: 1.7
+                }}
+              >
+                Мы используем современный стек технологий для создания надежных и 
+                производительных решений. Наш код соответствует лучшим практикам
+                и постоянно совершенствуется.
+              </Typography>
+
+              <Box 
+                sx={{ 
+                  display: 'flex', 
+                  gap: 2, 
+                  flexWrap: 'wrap',
+                  justifyContent: 'center',
+                }}
+              >
+                {technologies.map((tech, i) => (
+                  <Chip 
+                    key={i} 
+                    label={tech} 
+                    sx={{
+                      background: 'linear-gradient(135deg, #002664 0%, #0f4dbc 100%)',
+                      color: 'white',
+                      fontWeight: 600,
+                      px: 3,
+                      py: 1.5,
+                      fontSize: '0.9rem',
+                      transition: 'all 0.2s ease-in-out',
+                      '&:hover': {
+                        background: 'linear-gradient(135deg, #0f4dbc 0%, #002664 100%)',
+                      },
+                    }}
+                  />
+                ))}
+              </Box>
+            </Stack>
+          </Paper>
+          
+        </Stack>
+      </Container>
+    </Box>
   );
 };
 
