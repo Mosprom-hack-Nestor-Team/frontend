@@ -15,8 +15,10 @@ import {
 import PersonIcon from '@mui/icons-material/Person';
 import MailOutlineIcon from '@mui/icons-material/MailOutline';
 import LockIcon from '@mui/icons-material/Lock';
+import TableChartIcon from '@mui/icons-material/TableChart';
 import { Link } from 'react-router-dom';
 import { apiService } from '../services/api';
+import AeroLinesBackground from '../components/AeroLinesBackground';
 
 type RegisterForm = {
   name: string;
@@ -36,7 +38,6 @@ export const RegisterPage: React.FC = () => {
 
     try {
       await apiService.register(formData);
-      // Перезагружаем страницу чтобы обновить состояние пользователя
       window.location.href = '/dashboard';
     } catch (error) {
       setError(error instanceof Error ? error.message : 'Ошибка регистрации');
@@ -46,30 +47,66 @@ export const RegisterPage: React.FC = () => {
   };
 
   return (
-    <Box sx={{ minHeight: 'calc(100vh - 64px)', bgcolor: 'background.default', py: { xs: 6, md: 12 } }}>
-      <Container maxWidth="sm">
-        <Paper elevation={6} sx={{ p: { xs: 3, md: 6 }, borderRadius: 2 }}>
-          <Stack spacing={3}>
+    <Box sx={{ position: 'relative', minHeight: '100vh' }}>
+      <AeroLinesBackground />
+      <Container maxWidth="sm" sx={{ py: { xs: 8, md: 12 }, position: 'relative' }}>
+        <Paper 
+          elevation={0}
+          sx={{ 
+            p: { xs: 4, md: 6 }, 
+            borderRadius: 3,
+            background: 'linear-gradient(135deg, #ffffff 0%, #fafbfc 100%)',
+            border: '1px solid',
+            borderColor: 'rgba(0, 38, 100, 0.1)',
+            boxShadow: '0 8px 32px rgba(0, 38, 100, 0.12)',
+          }}
+        >
+          <Stack spacing={4}>
+            {/* Заголовок */}
             <Box textAlign="center">
-              <Typography variant="h4" sx={{
-                background: 'linear-gradient(90deg,#60a5fa 0%, #8b5cf6 100%)',
-                WebkitBackgroundClip: 'text',
-                WebkitTextFillColor: 'transparent',
-                fontWeight: 800,
-              }} gutterBottom>
+              <Box
+                sx={{
+                  background: 'linear-gradient(135deg, #002664 0%, #0f4dbc 100%)',
+                  borderRadius: 3,
+                  p: 2,
+                  width: 70,
+                  height: 70,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  mx: 'auto',
+                  mb: 3,
+                }}
+              >
+                <TableChartIcon sx={{ color: 'white', fontSize: 32 }} />
+              </Box>
+              <Typography
+                variant="h4"
+                sx={{
+                  fontWeight: 700,
+                  background: 'linear-gradient(135deg, #002664 0%, #0f4dbc 100%)',
+                  backgroundClip: 'text',
+                  WebkitBackgroundClip: 'text',
+                  color: 'transparent',
+                  mb: 1,
+                }}
+              >
                 Создать аккаунт
               </Typography>
-              <Typography color="text.secondary">Присоединяйтесь к нам и начните работу</Typography>
+              <Typography variant="body1" color="text.secondary" sx={{ fontWeight: 400 }}>
+                Присоединяйтесь к нам и начните работу
+              </Typography>
             </Box>
 
             {error && (
-              <Alert severity="error" onClose={() => setError('')}>
+              <Alert severity="error" onClose={() => setError('')} sx={{ borderRadius: 2 }}>
                 {error}
               </Alert>
             )}
 
+            {/* Форма */}
             <Box component="form" onSubmit={handleSubmit}>
-              <Stack spacing={2}>
+              <Stack spacing={3}>
                 <TextField
                   label="Имя"
                   required
@@ -78,11 +115,19 @@ export const RegisterPage: React.FC = () => {
                   InputProps={{
                     startAdornment: (
                       <InputAdornment position="start">
-                        <PersonIcon color="action" />
+                        <PersonIcon sx={{ color: '#002664' }} />
                       </InputAdornment>
                     ),
                   }}
                   fullWidth
+                  sx={{
+                    '& .MuiOutlinedInput-root': {
+                      borderRadius: 2,
+                      '&:hover fieldset': {
+                        borderColor: '#002664',
+                      },
+                    }
+                  }}
                 />
 
                 <TextField
@@ -94,11 +139,19 @@ export const RegisterPage: React.FC = () => {
                   InputProps={{
                     startAdornment: (
                       <InputAdornment position="start">
-                        <MailOutlineIcon color="action" />
+                        <MailOutlineIcon sx={{ color: '#002664' }} />
                       </InputAdornment>
                     ),
                   }}
                   fullWidth
+                  sx={{
+                    '& .MuiOutlinedInput-root': {
+                      borderRadius: 2,
+                      '&:hover fieldset': {
+                        borderColor: '#002664',
+                      },
+                    }
+                  }}
                 />
 
                 <TextField
@@ -111,12 +164,20 @@ export const RegisterPage: React.FC = () => {
                   InputProps={{
                     startAdornment: (
                       <InputAdornment position="start">
-                        <LockIcon color="action" />
+                        <LockIcon sx={{ color: '#002664' }} />
                       </InputAdornment>
                     ),
                   }}
                   helperText="Минимум 8 символов"
                   fullWidth
+                  sx={{
+                    '& .MuiOutlinedInput-root': {
+                      borderRadius: 2,
+                      '&:hover fieldset': {
+                        borderColor: '#002664',
+                      },
+                    }
+                  }}
                 />
 
                 <Button
@@ -125,18 +186,39 @@ export const RegisterPage: React.FC = () => {
                   size="large"
                   fullWidth
                   disabled={isLoading}
-                  startIcon={isLoading ? <CircularProgress color="inherit" size={18} /> : undefined}
+                  startIcon={isLoading ? <CircularProgress color="inherit" size={20} /> : undefined}
+                  sx={{
+                    background: 'linear-gradient(135deg, #002664 0%, #0f4dbc 100%)',
+                    borderRadius: 2,
+                    py: 1.5,
+                    fontWeight: 600,
+                    fontSize: '1rem',
+                    '&:hover': {
+                      background: 'linear-gradient(135deg, #0f4dbc 0%, #002664 100%)',
+                    },
+                    transition: 'all 0.3s ease-in-out',
+                  }}
                 >
                   {isLoading ? 'Регистрация...' : 'Зарегистрироваться'}
                 </Button>
               </Stack>
             </Box>
 
+            {/* Ссылка на вход */}
             <Box textAlign="center" pt={2}>
-              <Typography variant="body2" color="text.secondary">
+              <Typography variant="body1" color="text.secondary">
                 Уже есть аккаунт?{' '}
                 <Link to="/login" style={{ textDecoration: 'none' }}>
-                  <MuiLink component="span" sx={{ color: 'primary.main', fontWeight: 600 }}>
+                  <MuiLink 
+                    component="span" 
+                    sx={{ 
+                      color: '#002664', 
+                      fontWeight: 600,
+                      '&:hover': {
+                        color: '#0f4dbc',
+                      }
+                    }}
+                  >
                     Войти
                   </MuiLink>
                 </Link>
