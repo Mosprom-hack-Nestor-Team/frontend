@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import {
     Box,
-    TextField,
     Paper,
     Chip,
     Typography,
@@ -44,12 +43,20 @@ export const SpreadsheetEditor: React.FC<SpreadsheetEditorProps> = ({
     const [cells, setCells] = useState<Record<string, any>>(spreadsheet.cells || {});
     const [selectedCell, setSelectedCell] = useState<CellPosition | null>(null);
     const [editingCell, setEditingCell] = useState<CellPosition | null>(null);
-    const [editValue, setEditValue] = useState('');
+    // Keep current editing value in a ref to avoid re-rendering on each keystroke
+    const editValueRef = useRef<string>('');
     const [activeUsers, setActiveUsers] = useState<ActiveUser[]>([]);
     const [ws, setWs] = useState<WebSocket | null>(null);
     const inputRef = useRef<HTMLInputElement>(null);
 
     const canEdit = spreadsheet.my_permission === 'owner' || spreadsheet.my_permission === 'edit';
+
+    // Initialize selection on load
+    useEffect(() => {
+        if (spreadsheet && spreadsheet.rows > 0 && spreadsheet.cols > 0) {
+            setSelectedCell({ row: 0, col: 0 });
+        }
+    }, [spreadsheet.id]);
 
     // WebSocket connection
     useEffect(() => {
@@ -142,21 +149,37 @@ export const SpreadsheetEditor: React.FC<SpreadsheetEditorProps> = ({
         return cells[cellRef]?.style || {};
     };
 
+    const beginEdit = (row: number, col: number, initialValue?: string) => {
+        if (!canEdit) return;
+        setEditingCell({ row, col });
+        const base = initialValue !== undefined ? initialValue : (getCellValue(row, col)?.toString() || '');
+        editValueRef.current = base;
+        // focus after input mounts
+        setTimeout(() => {
+            if (inputRef.current) {
+                inputRef.current.focus();
+                const len = inputRef.current.value.length;
+                inputRef.current.setSelectionRange(len, len);
+            }
+        }, 0);
+    };
+
     const handleCellClick = (row: number, col: number) => {
+        const alreadySelected = selectedCell?.row === row && selectedCell?.col === col;
         setSelectedCell({ row, col });
+        // Single-click to edit if clicked again on the same selected cell
+        if (alreadySelected && !editingCell && canEdit) {
+            beginEdit(row, col);
+        }
     };
 
     const handleCellDoubleClick = (row: number, col: number) => {
-        if (!canEdit) return;
-
-        setEditingCell({ row, col });
-        setEditValue(getCellValue(row, col)?.toString() || '');
-        setTimeout(() => inputRef.current?.focus(), 0);
+        beginEdit(row, col);
     };
 
     const handleCellChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        const newValue = e.target.value;
-        setEditValue(newValue);
+        // Update ref only, do not trigger re-render
+        editValueRef.current = e.target.value;
     };
 
     const handleCellBlur = async () => {
@@ -168,13 +191,13 @@ export const SpreadsheetEditor: React.FC<SpreadsheetEditorProps> = ({
         setCells((prev) => ({
             ...prev,
             [cellRef]: {
-                value: editValue,
+                value: editValueRef.current,
                 value_type: 'text',
                 style: currentStyle,
             },
         }));
 
-        await saveCellToServer(editingCell.row, editingCell.col, editValue);
+        await saveCellToServer(editingCell.row, editingCell.col, editValueRef.current);
         setEditingCell(null);
     };
 
@@ -189,20 +212,20 @@ export const SpreadsheetEditor: React.FC<SpreadsheetEditorProps> = ({
 
             setCells((prev) => ({
                 ...prev,
-                [cellRef]: {
-                    value: editValue,
-                    value_type: 'text',
-                    style: currentStyle,
-                },
-            }));
+            [cellRef]: {
+                value: editValueRef.current,
+                value_type: 'text',
+                style: currentStyle,
+            },
+        }));
 
-            await saveCellToServer(editingCell.row, editingCell.col, editValue);
+            await saveCellToServer(editingCell.row, editingCell.col, editValueRef.current);
 
             const nextRow = editingCell.row + 1;
             if (nextRow < spreadsheet.rows) {
                 setEditingCell({ row: nextRow, col: editingCell.col });
                 setSelectedCell({ row: nextRow, col: editingCell.col });
-                setEditValue(getCellValue(nextRow, editingCell.col)?.toString() || '');
+                editValueRef.current = getCellValue(nextRow, editingCell.col)?.toString() || '';
                 setTimeout(() => inputRef.current?.focus(), 0);
             } else {
                 setEditingCell(null);
@@ -217,24 +240,65 @@ export const SpreadsheetEditor: React.FC<SpreadsheetEditorProps> = ({
 
             setCells((prev) => ({
                 ...prev,
-                [cellRef]: {
-                    value: editValue,
-                    value_type: 'text',
-                    style: currentStyle,
-                },
-            }));
+            [cellRef]: {
+                value: editValueRef.current,
+                value_type: 'text',
+                style: currentStyle,
+            },
+        }));
 
-            await saveCellToServer(editingCell.row, editingCell.col, editValue);
+            await saveCellToServer(editingCell.row, editingCell.col, editValueRef.current);
 
             const nextCol = editingCell.col + 1;
             if (nextCol < spreadsheet.cols) {
                 setEditingCell({ row: editingCell.row, col: nextCol });
                 setSelectedCell({ row: editingCell.row, col: nextCol });
-                setEditValue(getCellValue(editingCell.row, nextCol)?.toString() || '');
+                editValueRef.current = getCellValue(editingCell.row, nextCol)?.toString() || '';
                 setTimeout(() => inputRef.current?.focus(), 0);
             } else {
                 setEditingCell(null);
             }
+        }
+    };
+
+    // Keyboard navigation and quick edit when not in editing mode
+    const handleGridKeyDown = (e: React.KeyboardEvent) => {
+        if (editingCell) return; // handled by input
+        if (!selectedCell) return;
+        const { row, col } = selectedCell;
+
+        if (e.key === 'Enter' || e.key === 'F2') {
+            e.preventDefault();
+            beginEdit(row, col);
+            return;
+        }
+        if (e.key === 'ArrowUp') {
+            e.preventDefault();
+            const next = Math.max(0, row - 1);
+            setSelectedCell({ row: next, col });
+            return;
+        }
+        if (e.key === 'ArrowDown') {
+            e.preventDefault();
+            const next = Math.min(spreadsheet.rows - 1, row + 1);
+            setSelectedCell({ row: next, col });
+            return;
+        }
+        if (e.key === 'ArrowLeft') {
+            e.preventDefault();
+            const next = Math.max(0, col - 1);
+            setSelectedCell({ row, col: next });
+            return;
+        }
+        if (e.key === 'ArrowRight') {
+            e.preventDefault();
+            const next = Math.min(spreadsheet.cols - 1, col + 1);
+            setSelectedCell({ row, col: next });
+            return;
+        }
+        // Start typing to edit
+        if (e.key.length === 1 && !e.ctrlKey && !e.metaKey && !e.altKey) {
+            beginEdit(row, col, e.key);
         }
     };
 
@@ -285,31 +349,20 @@ export const SpreadsheetEditor: React.FC<SpreadsheetEditorProps> = ({
 
         if (isEditing) {
             return (
-                <TextField
+                <input
                     ref={inputRef}
-                    value={editValue}
-                    onChange={handleCellChange}
+                    defaultValue={editValueRef.current}
+                    onInput={(e) => handleCellChange(e as unknown as React.ChangeEvent<HTMLInputElement>)}
                     onBlur={handleCellBlur}
                     onKeyDown={handleCellKeyDown}
-                    size="small"
-                    fullWidth
-                    autoFocus
-                    variant="standard"
-                    sx={{
-                        '& .MuiInputBase-root': {
-                            height: '100%',
-                            fontSize: '14px',
-                            padding: '4px 8px',
-                        },
-                        '& .MuiInput-underline:before': {
-                            borderBottom: 'none',
-                        },
-                        '& .MuiInput-underline:after': {
-                            borderBottom: '2px solid #002664',
-                        },
-                    }}
-                    InputProps={{
-                        disableUnderline: false,
+                    style={{
+                        width: '100%',
+                        height: '100%',
+                        fontSize: '14px',
+                        padding: '6px 8px',
+                        border: '2px solid #002664',
+                        outline: 'none',
+                        boxSizing: 'border-box',
                     }}
                 />
             );
@@ -452,7 +505,11 @@ export const SpreadsheetEditor: React.FC<SpreadsheetEditorProps> = ({
                     boxShadow: '0 4px 20px rgba(0, 38, 100, 0.08)',
                 }}
             >
-                <Box sx={{ display: 'inline-block', minWidth: '100%' }}>
+                <Box 
+                    sx={{ display: 'inline-block', minWidth: '100%' }}
+                    tabIndex={0}
+                    onKeyDown={handleGridKeyDown}
+                >
                     {/* Header row */}
                     <Box sx={{ 
                         display: 'flex', 
