@@ -375,6 +375,45 @@ class ApiService {
         const wsBaseUrl = API_BASE_URL.replace('http', 'ws');
         return `${wsBaseUrl}/ws/spreadsheets/${spreadsheetId}?token=${token}`;
     }
+
+    /**
+     * Import Excel (.xlsx) file to Mongo via backend
+     */
+    async importExcel(file: File): Promise<{ inserted: number }> {
+        const form = new FormData();
+        form.append('file', file);
+
+        const token = localStorage.getItem('access_token');
+        const response = await fetch(`${API_BASE_URL}/files/import`, {
+            method: 'POST',
+            headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+            body: form,
+        });
+        if (!response.ok) {
+            try {
+                const data = await response.json();
+                throw new Error(data?.detail || 'Failed to import file');
+            } catch {
+                throw new Error('Failed to import file');
+            }
+        }
+        return await response.json();
+    }
+
+    /**
+     * Export Mongo data as Excel file
+     */
+    async exportExcel(): Promise<Blob> {
+        const token = localStorage.getItem('access_token');
+        const response = await fetch(`${API_BASE_URL}/files/export`, {
+            method: 'GET',
+            headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+        });
+        if (!response.ok) {
+            throw new Error('Failed to export data');
+        }
+        return await response.blob();
+    }
 }
 
 export const apiService = new ApiService();

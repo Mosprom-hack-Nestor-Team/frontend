@@ -24,6 +24,8 @@ import {
 } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
 import { apiService, type SpreadsheetInfo, type SpreadsheetCreate } from '../services/api';
+import UploadFileIcon from '@mui/icons-material/UploadFile';
+import DownloadIcon from '@mui/icons-material/Download';
 
 export const SpreadsheetList: React.FC = () => {
     const navigate = useNavigate();
@@ -133,6 +135,53 @@ export const SpreadsheetList: React.FC = () => {
 
     return (
         <Box>
+            <Box display="flex" justifyContent="flex-end" alignItems="center" mb={2} gap={1}>
+                <input
+                    id="excel-file-input"
+                    type="file"
+                    accept=".xlsx"
+                    style={{ display: 'none' }}
+                    onChange={async (e) => {
+                        const file = e.target.files?.[0];
+                        if (!file) return;
+                        try {
+                            const res = await apiService.importExcel(file);
+                            alert(`Импорт успешно выполнен. Загружено записей: ${res.inserted}`);
+                        } catch (err: any) {
+                            alert(err?.message || 'Не удалось импортировать файл');
+                        } finally {
+                            e.currentTarget.value = '';
+                        }
+                    }}
+                />
+                <label htmlFor="excel-file-input">
+                    <Button variant="outlined" component="span" startIcon={<UploadFileIcon />}>
+                        Импорт Excel
+                    </Button>
+                </label>
+                <Button
+                    variant="outlined"
+                    color="inherit"
+                    startIcon={<DownloadIcon />}
+                    onClick={async () => {
+                        try {
+                            const blob = await apiService.exportExcel();
+                            const url = URL.createObjectURL(blob);
+                            const a = document.createElement('a');
+                            a.href = url;
+                            a.download = 'export.xlsx';
+                            document.body.appendChild(a);
+                            a.click();
+                            a.remove();
+                            URL.revokeObjectURL(url);
+                        } catch (err: any) {
+                            alert(err?.message || 'Не удалось экспортировать данные');
+                        }
+                    }}
+                >
+                    Экспорт Excel
+                </Button>
+            </Box>
             <Box display="flex" justifyContent="space-between" alignItems="center" mb={3}>
                 <Typography variant="h4" component="h1">
                     Мои таблицы
