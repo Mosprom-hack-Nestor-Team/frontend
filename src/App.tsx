@@ -18,6 +18,7 @@ import { AboutPage } from './pages/AboutPage';
 import { LoginPage } from './pages/LoginPage';
 import { RegisterPage } from './pages/RegisterPage';
 import { ProfilePage } from './pages/ProfilePage';
+import { SpreadsheetPage } from './pages/SpreadsheetPage';
 import { apiService, type UserData } from './services/api';
 
 /**
@@ -166,10 +167,8 @@ export const App: React.FC = () => {
                 <Route path="/about" element={<AboutPage />} />
                 <Route path="/login" element={<LoginPage />} />
                 <Route path="/register" element={<RegisterPage />} />
-                <Route
-                  path="/profile"
-                  element={<ProfilePage />}
-                />
+                <Route path="/profile" element={<ProfilePage />} />
+                <Route path="/spreadsheet/:id" element={<SpreadsheetPage />} />
                 {/* Пример маршрута таблицы (если требуется) */}
                 <Route
                   path="/table/:id"
