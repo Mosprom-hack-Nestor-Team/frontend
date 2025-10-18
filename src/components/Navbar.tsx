@@ -134,7 +134,7 @@ export const Navbar: React.FC<NavbarProps> = ({ user, onLogout }) => {
               letterSpacing: '0.5px',
             }}
           >
-            Nestor Team
+            AeroDocs
           </Typography>
         </Box>
 
