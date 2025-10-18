@@ -1,99 +1,144 @@
+import React from 'react';
 import {
-  Box,
   Container,
-  Heading,
-  SimpleGrid,
-  Text,
+  Box,
+  Typography,
   Stack,
-  Badge,
-  For,
-} from '@chakra-ui/react';
+  Paper,
+  Grid,
+  Chip,
+  LinearProgress,
+  useTheme,
+  Button,
+} from '@mui/material';
 
-interface StatCardProps {
+type Table = {
+  id: string;
+  name: string;
+  description?: string;
+  columnsCount?: number;
+  rowsCount?: number;
+  lastModified?: string;
+  created?: string;
+  type?: string;
+};
+
+type DashboardPageProps = {
+  tables?: Table[];
+  onCreateTable?: () => void;
+  onEditTable?: (id: string) => void;
+  onDeleteTable?: (id: string) => void;
+  onOpenTable?: (id: string) => void;
+};
+
+interface Stat {
   title: string;
   value: string;
   change: string;
   isPositive: boolean;
 }
 
-const StatCard = ({ title, value, change, isPositive }: StatCardProps) => {
-  return (
-    <Box
-      bg="white"
-      shadow="md"
-      p={6}
-      rounded="lg"
-      _hover={{ shadow: 'xl', transform: 'translateY(-2px)', transition: 'all 0.3s' }}
-    >
-      <Stack gap={2}>
-        <Text color="gray.600" fontSize="sm">
-          {title}
-        </Text>
-        <Text fontSize="3xl" fontWeight="bold">
-          {value}
-        </Text>
-        <Text fontSize="sm" color={isPositive ? 'green.500' : 'red.500'}>
-          {isPositive ? '↑' : '↓'} {change}
-        </Text>
-      </Stack>
-    </Box>
-  );
-};
-
-interface TaskCardProps {
+interface Task {
   title: string;
-  progress: number;
-  status: string;
+  progress: number; // 0-100
+  status: 'active' | 'pending' | 'completed' | string;
 }
 
-const TaskCard = ({ title, progress, status }: TaskCardProps) => {
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'active':
-        return 'green';
-      case 'pending':
-        return 'yellow';
-      case 'completed':
-        return 'blue';
-      default:
-        return 'gray';
-    }
-  };
-
+const StatCard: React.FC<Stat> = ({ title, value, change, isPositive }) => {
   return (
-    <Box bg="white" shadow="md" p={6} rounded="lg">
-      <Stack gap={3}>
-        <Box display="flex" justifyContent="space-between" alignItems="center">
-          <Text fontWeight="semibold">{title}</Text>
-          <Badge colorPalette={getStatusColor(status)}>{status}</Badge>
-        </Box>
-        <Box>
-          <Text fontSize="sm" color="gray.600" mb={2}>
-            Прогресс: {progress}%
-          </Text>
-          <Box bg="gray.200" rounded="full" h="8px" overflow="hidden">
-            <Box
-              bg={`${getStatusColor(status)}.500`}
-              h="full"
-              w={`${progress}%`}
-              transition="width 0.3s"
-            />
-          </Box>
-        </Box>
+    <Paper
+      elevation={2}
+      sx={{
+        p: 3,
+        borderRadius: 2,
+        transition: 'transform .18s ease, box-shadow .18s ease',
+        '&:hover': { transform: 'translateY(-6px)', boxShadow: 6 },
+      }}
+    >
+      <Stack spacing={1}>
+        <Typography variant="caption" color="text.secondary">
+          {title}
+        </Typography>
+        <Typography variant="h4" fontWeight={700}>
+          {value}
+        </Typography>
+        <Typography
+          variant="body2"
+          sx={{ color: isPositive ? 'success.main' : 'error.main', fontWeight: 600 }}
+        >
+          {isPositive ? '↑' : '↓'} {change}
+        </Typography>
       </Stack>
-    </Box>
+    </Paper>
   );
 };
 
-export const DashboardPage = () => {
-  const stats = [
+const TaskCard: React.FC<Task> = ({ title, progress, status }) => {
+  const theme = useTheme();
+  const bg = "black";
+
+  return (
+    <Paper
+      elevation={2}
+      sx={{
+        p: 2.5,
+        borderRadius: 2,
+      }}
+    >
+      <Stack spacing={1.5}>
+        <Box display="flex" justifyContent="space-between" alignItems="center">
+          <Typography variant="subtitle1" fontWeight={700}>
+            {title}
+          </Typography>
+          <Chip
+            label={status}
+            size="small"
+            sx={{
+              bgcolor: bg,
+              color: theme.palette.getContrastText(bg),
+              fontWeight: 700,
+            }}
+          />
+        </Box>
+
+        <Box>
+          <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
+            Прогресс: {progress}%
+          </Typography>
+          <LinearProgress
+            variant="determinate"
+            value={progress}
+            sx={{
+              height: 8,
+              borderRadius: 8,
+              '& .MuiLinearProgress-bar': {
+                bgcolor: bg,
+              },
+              bgcolor: theme.palette.grey[200],
+            }}
+          />
+        </Box>
+      </Stack>
+    </Paper>
+  );
+};
+
+export const DashboardPage: React.FC<DashboardPageProps> = ({
+  tables,
+  onCreateTable,
+  onEditTable,
+  onDeleteTable,
+  onOpenTable,
+}) => {
+  // Данные по умолчанию, если не переданы пропсы
+  const stats: Stat[] = [
     { title: 'Всего пользователей', value: '1,234', change: '12%', isPositive: true },
     { title: 'Активные проекты', value: '45', change: '8%', isPositive: true },
     { title: 'Выполнено задач', value: '892', change: '23%', isPositive: true },
     { title: 'Доход', value: '$12,345', change: '5%', isPositive: false },
   ];
 
-  const tasks = [
+  const tasks: Task[] = [
     { title: 'Разработка нового функционала', progress: 75, status: 'active' },
     { title: 'Тестирование API', progress: 50, status: 'active' },
     { title: 'Обновление документации', progress: 30, status: 'pending' },
@@ -101,49 +146,60 @@ export const DashboardPage = () => {
   ];
 
   return (
-    <Container maxW="container.xl" py={10}>
-      <Stack gap={8}>
+    <Container maxWidth="xl" sx={{ py: { xs: 4, md: 8 } }}>
+      <Stack spacing={4}>
         <Box>
-          <Heading mb={2}>Dashboard</Heading>
-          <Text color="gray.600">
-            Обзор ключевых метрик и статистики
-          </Text>
+          <Typography variant="h4" fontWeight={800} gutterBottom>
+            Dashboard
+          </Typography>
+          <Typography color="text.secondary">Обзор ключевых метрик и статистики</Typography>
         </Box>
 
-        {/* Statistics */}
-        <SimpleGrid columns={{ base: 1, md: 2, lg: 4 }} gap={6}>
-          <For each={stats}>
-            {(stat, index) => (
-              <StatCard key={index} {...stat} />
-            )}
-          </For>
-        </SimpleGrid>
+        
 
         {/* Tasks */}
         <Box>
-          <Heading size="md" mb={4}>
-            Текущие задачи
-          </Heading>
-          <SimpleGrid columns={{ base: 1, md: 2 }} gap={4}>
-            <For each={tasks}>
-              {(task, index) => (
-                <TaskCard key={index} {...task} />
-              )}
-            </For>
-          </SimpleGrid>
+          <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
+            <Box>
+              <Typography variant="h6" fontWeight={700}>
+                Текущие задачи
+              </Typography>
+              <Typography variant="body2" color="text.secondary">
+                Статус задач в проекте
+              </Typography>
+            </Box>
+
+            {/* Пример кнопки создания таблицы — если передали onCreateTable, она активна */}
+            {onCreateTable ? (
+              <Button variant="contained" onClick={onCreateTable}>
+                Создать таблицу
+              </Button>
+            ) : null}
+          </Box>
+
+          
         </Box>
 
         {/* Additional Info */}
-        <Box bg="blue.50" shadow="md" p={6} rounded="lg">
-          <Stack gap={3}>
-            <Heading size="sm">💡 Подсказка</Heading>
-            <Text color="gray.700">
-              Используйте панель навигации для перехода между разделами приложения.
-              Все данные обновляются в режиме реального времени.
-            </Text>
+        <Paper
+          elevation={1}
+          sx={{
+            p: 3,
+            borderRadius: 2,
+            bgcolor: 'rgba(59,130,246,0.06)', // blue.50 аналог
+          }}
+        >
+          <Stack spacing={1}>
+            <Typography variant="subtitle2">💡 Подсказка</Typography>
+            <Typography color="text.secondary">
+              Используйте панель навигации для перехода между разделами приложения. Все данные
+              обновляются в режиме реального времени.
+            </Typography>
           </Stack>
-        </Box>
+        </Paper>
       </Stack>
     </Container>
   );
 };
+
+export default DashboardPage;

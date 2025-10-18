@@ -1,86 +1,133 @@
+import React from 'react';
 import {
   Box,
   Container,
-  Heading,
-  Text,
+  Typography,
   Button,
   Stack,
-  Flex,
-} from '@chakra-ui/react';
+  Paper,
+  Avatar,
+} from '@mui/material';
 import { useNavigate } from 'react-router-dom';
-import { FiArrowRight, FiDatabase, FiTrendingUp, FiUsers } from 'react-icons/fi';
+import Grid from '@mui/material/Grid';
 
-const Feature = ({ title, text, icon }: { title: string; text: string; icon: React.ReactNode }) => {
+// MUI icons
+import StorageIcon from '@mui/icons-material/Storage';
+import TrendingUpIcon from '@mui/icons-material/TrendingUp';
+import GroupIcon from '@mui/icons-material/Group';
+import ArrowForwardIcon from '@mui/icons-material/ArrowForward';
+
+type FeatureProps = {
+  title: string;
+  text: string;
+  icon: React.ReactNode;
+};
+
+const Feature: React.FC<FeatureProps> = ({ title, text, icon }) => {
   return (
-    <Stack
-      bg="white"
-      p={6}
-      rounded="lg"
-      shadow="md"
-      _hover={{ shadow: 'xl', transform: 'translateY(-4px)', transition: 'all 0.3s' }}
-      gap={4}
+    <Paper
+      elevation={2}
+      sx={{
+        p: 3,
+        borderRadius: 2,
+        bgcolor: 'background.paper',
+        display: 'flex',
+        flexDirection: 'column',
+        gap: 2,
+        transition: 'transform 0.28s ease, box-shadow 0.28s ease',
+        '&:hover': {
+          transform: 'translateY(-8px)',
+          boxShadow: 6,
+        },
+      }}
     >
-      <Flex
-        w={16}
-        h={16}
-        align="center"
-        justify="center"
-        color="white"
-        rounded="full"
-        bg="blue.500"
+      <Avatar
+        sx={{
+          width: 64,
+          height: 64,
+          bgcolor: 'primary.main',
+          alignSelf: 'flex-start',
+        }}
+        aria-hidden
       >
         {icon}
-      </Flex>
-      <Heading size="md">
+      </Avatar>
+
+      <Typography variant="h6" component="h3">
         {title}
-      </Heading>
-      <Text color="gray.600">{text}</Text>
-    </Stack>
+      </Typography>
+
+      <Typography variant="body2" color="text.secondary">
+        {text}
+      </Typography>
+    </Paper>
   );
 };
 
-export const HomePage = () => {
+export const HomePage: React.FC = () => {
   const navigate = useNavigate();
 
   return (
     <Box>
-      {/* Hero Section */}
+      {/* Hero */}
       <Box
-        bg="blue.50"
-        py={20}
-        px={4}
+        component="section"
+        sx={{
+          bgcolor: 'rgba(59,130,246,0.06)', // blue.50 like
+          py: { xs: 10, md: 14 },
+          px: 2,
+        }}
       >
-        <Container maxW="container.xl">
-          <Stack gap={8} align="center" textAlign="center">
-            <Heading
-              fontSize={{ base: '4xl', md: '6xl' }}
-              bgGradient="to-r"
-              gradientFrom="blue.400"
-              gradientTo="purple.500"
-              bgClip="text"
+        <Container maxWidth="xl">
+          <Stack
+            spacing={4}
+            alignItems="center"
+            textAlign="center"
+            sx={{ maxWidth: 960, margin: '0 auto' }}
+          >
+            <Typography
+              variant="h2"
+              component="h1"
+              sx={{
+                fontSize: { xs: '2.25rem', md: '3.5rem' },
+                lineHeight: 1.05,
+                fontWeight: 700,
+                background: 'linear-gradient(90deg,#60a5fa 0%, #8b5cf6 100%)',
+                WebkitBackgroundClip: 'text',
+                WebkitTextFillColor: 'transparent',
+              }}
             >
               Добро пожаловать в наше приложение
-            </Heading>
-            <Text
-              fontSize={{ base: 'lg', md: 'xl' }}
-              color="gray.600"
-              maxW="2xl"
+            </Typography>
+
+            <Typography
+              variant="h6"
+              sx={{
+                color: 'text.secondary',
+                maxWidth: 720,
+                fontWeight: 400,
+              }}
             >
-              Современное решение для управления данными и аналитики. 
-              Простой интерфейс, мощные возможности.
-            </Text>
-            <Stack direction={{ base: 'column', md: 'row' }} gap={4}>
+              Современное решение для управления данными и аналитики. Простой интерфейс, мощные возможности.
+            </Typography>
+
+            <Stack
+              direction={{ xs: 'column', md: 'row' }}
+              spacing={2}
+              sx={{ pt: 1 }}
+            >
               <Button
-                size="lg"
-                colorScheme="blue"
+                variant="contained"
+                size="large"
                 onClick={() => navigate('/dashboard')}
+                endIcon={<ArrowForwardIcon />}
               >
-                Перейти к Dashboard →
+                Перейти к Dashboard
               </Button>
+
               <Button
-                size="lg"
-                variant="outline"
-                colorScheme="blue"
+                variant="outlined"
+                size="large"
                 onClick={() => navigate('/about')}
               >
                 Узнать больше
@@ -90,37 +137,28 @@ export const HomePage = () => {
         </Container>
       </Box>
 
-      {/* Features Section */}
-      <Container maxW="container.xl" py={20}>
-        <Stack gap={12}>
+      {/* Features */}
+      <Container maxWidth="xl" sx={{ py: { xs: 10, md: 14 } }}>
+        <Stack spacing={6}>
           <Box textAlign="center">
-            <Heading mb={4}>Наши возможности</Heading>
-            <Text color="gray.600" fontSize="lg">
+            <Typography variant="h4" component="h2" gutterBottom>
+              Наши возможности
+            </Typography>
+            <Typography variant="body1" color="text.secondary" sx={{ maxWidth: 720, mx: 'auto' }}>
               Все что нужно для эффективной работы
-            </Text>
+            </Typography>
           </Box>
-          <Stack
-            direction={{ base: 'column', md: 'row' }}
-            gap={8}
-          >
-            <Feature
-              icon={<FiDatabase size={40} />}
-              title="Управление данными"
-              text="Эффективная работа с большими объемами данных и их структурирование"
-            />
-            <Feature
-              icon={<FiTrendingUp size={40} />}
-              title="Аналитика"
-              text="Продвинутые инструменты для анализа и визуализации данных"
-            />
-            <Feature
-              icon={<FiUsers size={40} />}
-              title="Командная работа"
-              text="Совместная работа в режиме реального времени"
-            />
-          </Stack>
+
+          <Grid container spacing={{ xs: 3, md: 4 }}>
+
+           
+
+            
+          </Grid>
         </Stack>
       </Container>
     </Box>
   );
 };
+
+export default HomePage;  

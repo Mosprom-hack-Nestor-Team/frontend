@@ -1,66 +1,61 @@
+import React from 'react';
 import {
-  Box,
   Container,
-  Heading,
-  Text,
+  Box,
+  Typography,
   Stack,
-  SimpleGrid,
-  Flex,
-  For,
-} from '@chakra-ui/react';
-import { FiCheckCircle } from 'react-icons/fi';
+  Paper,
+  Grid,
+  Avatar,
+  Chip,
+  useTheme,
+} from '@mui/material';
+import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 
 interface TeamMemberProps {
   name: string;
   role: string;
 }
 
-const TeamMember = ({ name, role }: TeamMemberProps) => {
-  // Получаем инициалы для аватара
-  const getInitials = (name: string) => {
-    return name
+const TeamMember: React.FC<TeamMemberProps> = ({ name, role }) => {
+  const getInitials = (nameStr: string) =>
+    nameStr
       .split(' ')
-      .map(n => n[0])
+      .map((n) => n[0])
       .join('')
       .toUpperCase();
-  };
 
   return (
-    <Box
-      bg="white"
-      shadow="md"
-      p={6}
-      rounded="lg"
-      _hover={{ shadow: 'xl', transform: 'translateY(-2px)', transition: 'all 0.3s' }}
+    <Paper
+      elevation={2}
+      sx={{
+        p: 3,
+        borderRadius: 2,
+        '&:hover': { transform: 'translateY(-4px)', boxShadow: 6 },
+        transition: 'transform 0.18s ease',
+      }}
     >
-      <Stack align="center" gap={4}>
-        <Flex
-          w={20}
-          h={20}
-          bg="blue.500"
-          color="white"
-          rounded="full"
-          align="center"
-          justify="center"
-          fontSize="2xl"
-          fontWeight="bold"
-        >
+      <Stack alignItems="center" spacing={2}>
+        <Avatar sx={{ width: 64, height: 64, bgcolor: 'primary.main', fontWeight: 700 }}>
           {getInitials(name)}
-        </Flex>
+        </Avatar>
+
         <Box textAlign="center">
-          <Text fontWeight="bold" fontSize="lg">
+          <Typography variant="subtitle1" fontWeight={700}>
             {name}
-          </Text>
-          <Text color="gray.600" fontSize="sm">
+          </Typography>
+          <Typography variant="body2" color="text.secondary">
             {role}
-          </Text>
+          </Typography>
         </Box>
       </Stack>
-    </Box>
+    </Paper>
   );
 };
 
-export const AboutPage = () => {
+export const AboutPage: React.FC = () => {
+  const theme = useTheme();
+
   const advantages = [
     'Интуитивно понятный интерфейс',
     'Быстрая обработка больших объемов данных',
@@ -76,114 +71,93 @@ export const AboutPage = () => {
     { name: 'Елена Козлова', role: 'UI/UX Designer' },
   ];
 
-  const technologies = ['React', 'TypeScript', 'Chakra UI', 'FastAPI', 'PostgreSQL', 'Docker'];
+  const technologies = ['React', 'TypeScript', 'MUI', 'FastAPI', 'PostgreSQL', 'Docker'];
 
   return (
-    <Container maxW="container.xl" py={10}>
-      <Stack gap={12}>
+    <Container maxWidth="xl" sx={{ py: { xs: 6, md: 10 } }}>
+      <Stack spacing={6}>
         {/* Header */}
         <Box textAlign="center">
-          <Heading
-            fontSize={{ base: '3xl', md: '5xl' }}
-            bgGradient="to-r"
-            gradientFrom="blue.400"
-            gradientTo="purple.500"
-            bgClip="text"
-            mb={4}
+          <Typography
+            variant="h3"
+            sx={{
+              fontSize: { xs: '1.75rem', md: '2.5rem' },
+              fontWeight: 800,
+              background: 'linear-gradient(90deg,#60a5fa 0%, #8b5cf6 100%)',
+              WebkitBackgroundClip: 'text',
+              WebkitTextFillColor: 'transparent',
+              mb: 1,
+            }}
           >
             О нашем проекте
-          </Heading>
-          <Text
-            fontSize={{ base: 'md', md: 'lg' }}
-            color="gray.600"
-            maxW="3xl"
-            mx="auto"
-          >
+          </Typography>
+
+          <Typography variant="body1" color="text.secondary" sx={{ maxWidth: 900, mx: 'auto' }}>
             Мы создаем инновационные решения для бизнеса, используя современные технологии
-            и лучшие практики разработки
-          </Text>
+            и лучшие практики разработки.
+          </Typography>
         </Box>
 
-        {/* Mission */}
-        <Box bg="white" shadow="lg" p={8} rounded="lg">
-          <Stack gap={6}>
-            <Heading size="lg">Наша миссия</Heading>
-            <Text color="gray.700" fontSize="md">
+        {/* Mission + Advantages */}
+        <Paper elevation={3} sx={{ p: { xs: 3, md: 6 }, borderRadius: 2 }}>
+          <Stack spacing={3}>
+            <Typography variant="h5">Наша миссия</Typography>
+            <Typography color="text.secondary">
               Предоставить доступные и эффективные инструменты для управления данными,
               которые помогут компаниям любого размера принимать обоснованные решения
               на основе аналитики. Мы верим в силу данных и стремимся сделать их
               использование простым и интуитивным.
-            </Text>
-            
-            <Box borderTop="1px" borderColor="gray.200" pt={6}>
-              <Heading size="md" mb={4}>Наши преимущества</Heading>
-              <Stack gap={3}>
-                <For each={advantages}>
-                  {(advantage, index) => (
-                    <Flex key={index} align="center" gap={3}>
-                      <Box color="green.500" fontSize="xl">
-                        <FiCheckCircle />
-                      </Box>
-                      <Text>{advantage}</Text>
-                    </Flex>
-                  )}
-                </For>
+            </Typography>
+
+            <Box sx={{ borderTop: `1px solid ${theme.palette.divider}`, pt: 3 }}>
+              <Typography variant="h6" mb={2}>
+                Наши преимущества
+              </Typography>
+
+              <Stack spacing={1}>
+                {advantages.map((adv, idx) => (
+                  <Stack key={idx} direction="row" alignItems="center" spacing={1}>
+                    <CheckCircleIcon sx={{ color: 'success.main', fontSize: 20 }} />
+                    <Typography>{adv}</Typography>
+                  </Stack>
+                ))}
               </Stack>
             </Box>
           </Stack>
-        </Box>
+        </Paper>
 
         {/* Team */}
         <Box>
-          <Heading size="lg" mb={2} textAlign="center">
+          <Typography variant="h5" textAlign="center" mb={1}>
             Наша команда
-          </Heading>
-          <Text
-            textAlign="center"
-            color="gray.600"
-            mb={8}
-          >
+          </Typography>
+          <Typography variant="body2" color="text.secondary" textAlign="center" mb={3}>
             Профессионалы, которые создают будущее
-          </Text>
-          <SimpleGrid columns={{ base: 1, md: 2, lg: 4 }} gap={6}>
-            <For each={team}>
-              {(member, index) => (
-                <TeamMember key={index} {...member} />
-              )}
-            </For>
-          </SimpleGrid>
+          </Typography>
+
+          
         </Box>
 
         {/* Technologies */}
-        <Box bg="purple.50" shadow="md" p={6} rounded="lg">
-          <Stack gap={4}>
-            <Heading size="md">🚀 Технологии</Heading>
-            <Text color="gray.700">
-              Мы используем современный стек технологий: React, TypeScript, Chakra UI,
+        <Paper elevation={2} sx={{ p: 3, borderRadius: 2, bgcolor: 'purple.50' }}>
+          <Stack spacing={2}>
+            <Typography variant="h6">🚀 Технологии</Typography>
+            <Typography color="text.secondary">
+              Мы используем современный стек технологий: React, TypeScript, MUI,
               FastAPI, PostgreSQL и многое другое. Наш код соответствует лучшим практикам
               и постоянно совершенствуется.
-            </Text>
-            <Flex gap={2} wrap="wrap">
-              <For each={technologies}>
-                {(tech, index) => (
-                  <Box
-                    key={index}
-                    px={4}
-                    py={2}
-                    bg="blue.500"
-                    color="white"
-                    rounded="full"
-                    fontSize="sm"
-                    fontWeight="semibold"
-                  >
-                    {tech}
-                  </Box>
-                )}
-              </For>
-            </Flex>
+            </Typography>
+
+            <Box sx={{ mt: 1, display: 'flex', gap: 1, flexWrap: 'wrap' }}>
+              {technologies.map((tech, i) => (
+                <Chip key={i} label={tech} color="primary" variant="filled" />
+              ))}
+            </Box>
           </Stack>
-        </Box>
+        </Paper>
       </Stack>
     </Container>
   );
 };
+
+export default AboutPage;

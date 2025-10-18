@@ -1,116 +1,116 @@
+import React, { useEffect, useState } from 'react';
 import {
-    Box,
-    Container,
-    Heading,
-    Text,
-    Stack,
-    Button,
-    Flex,
-} from '@chakra-ui/react';
-import { useEffect, useState } from 'react';
+  Box,
+  Container,
+  Paper,
+  Typography,
+  Stack,
+  Button,
+  Avatar,
+  IconButton,
+} from '@mui/material';
+import LogoutIcon from '@mui/icons-material/Logout';
 import { useNavigate } from 'react-router-dom';
-import { FiLogOut } from 'react-icons/fi';
 import { apiService, type UserData } from '../services/api';
 
-export const ProfilePage = () => {
-    const navigate = useNavigate();
-    const [user, setUser] = useState<UserData | null>(null);
+export const ProfilePage: React.FC = () => {
+  const navigate = useNavigate();
+  const [user, setUser] = useState<UserData | null>(null);
 
-    useEffect(() => {
-        // Check if user is authenticated
-        if (!apiService.isAuthenticated()) {
-            navigate('/login');
-            return;
-        }
-
-        // Get user data
-        const storedUser = apiService.getStoredUser();
-        setUser(storedUser);
-    }, [navigate]);
-
-    const handleLogout = async () => {
-        try {
-            await apiService.logout();
-        } catch (error) {
-            console.error('Logout error:', error);
-        } finally {
-            // Always redirect to login after logout attempt
-            navigate('/login', { replace: true });
-        }
-    };
-
-    if (!user) {
-        return null;
+  useEffect(() => {
+    // Check if user is authenticated
+    if (!apiService.isAuthenticated()) {
+      navigate('/login');
+      return;
     }
 
-    return (
-        <Box minH="calc(100vh - 64px)" bg="gray.50" position="relative">
-            {/* Logout Button in Top Right */}
-            <Box position="absolute" top={4} right={4} zIndex={10}>
-                <Button
-                    colorPalette="red"
-                    onClick={handleLogout}
-                    variant="outline"
-                    size="md"
-                >
-                    <FiLogOut style={{ marginRight: '8px' }} />
-                    Выход
-                </Button>
-            </Box>
+    // Get user data (synchronous fetch from storage in original)
+    const storedUser = apiService.getStoredUser();
+    setUser(storedUser);
+  }, [navigate]);
 
-            {/* Center Content */}
-            <Container maxW="container.md">
-                <Flex
-                    minH="calc(100vh - 64px)"
-                    align="center"
-                    justify="center"
-                >
-                    <Box textAlign="center" bg="white" p={12} rounded="xl" shadow="lg" w="full">
-                        <Stack gap={6}>
-                            <Box>
-                                <Heading
-                                    fontSize="4xl"
-                                    bgGradient="to-r"
-                                    gradientFrom="blue.400"
-                                    gradientTo="purple.500"
-                                    bgClip="text"
-                                    mb={4}
-                                >
-                                    Добро пожаловать! 🎉
-                                </Heading>
-                                <Text fontSize="xl" color="gray.700" fontWeight="semibold" mb={2}>
-                                    {user.name}
-                                </Text>
-                                <Text color="gray.500" fontSize="sm">
-                                    {user.email}
-                                </Text>
-                            </Box>
+  const handleLogout = async () => {
+    try {
+      await apiService.logout();
+    } catch (error) {
+      // логируем, но всё равно перенаправляем
+      // eslint-disable-next-line no-console
+      console.error('Logout error:', error);
+    } finally {
+      navigate('/login', { replace: true });
+    }
+  };
 
-                            <Box bg="blue.50" p={6} rounded="lg">
-                                <Text color="gray.700" fontSize="lg">
-                                    Вы успешно авторизованы в системе!
-                                </Text>
-                                <Text color="gray.600" fontSize="sm" mt={2}>
-                                    Роль: <strong>{user.role}</strong>
-                                </Text>
-                            </Box>
+  if (!user) return null;
 
-                            <Box pt={4}>
-                                <Text color="gray.500" fontSize="sm">
-                                    Ваш аккаунт был создан:{' '}
-                                    <strong>{new Date(user.created_at).toLocaleDateString('ru-RU')}</strong>
-                                </Text>
-                            </Box>
+  return (
+    <Box sx={{ minHeight: 'calc(100vh - 64px)', bgcolor: 'background.default', position: 'relative', py: { xs: 4, md: 8 } }}>
+      {/* Logout Button in Top Right */}
+      <Box sx={{ position: 'absolute', top: 16, right: 16, zIndex: 10 }}>
+        <Button
+          variant="outlined"
+          color="error"
+          startIcon={<LogoutIcon />}
+          onClick={handleLogout}
+        >
+          Выход
+        </Button>
+      </Box>
 
-                            <Box bg="purple.50" p={4} rounded="lg" borderLeft="4px" borderColor="purple.500">
-                                <Text color="gray.700" fontSize="sm">
-                                    💡 Это защищенная страница. Используйте кнопку "Выход" в правом верхнем углу для завершения сессии.
-                                </Text>
-                            </Box>
-                        </Stack>
-                    </Box>
-                </Flex>
-            </Container>
+      {/* Center Content */}
+      <Container maxWidth="md">
+        <Box sx={{ minHeight: 'calc(100vh - 64px)', display: 'flex', alignItems: 'center', justifyContent: 'center', py: { xs: 6, md: 10 } }}>
+          <Paper sx={{ width: '100%', p: { xs: 4, md: 8 }, borderRadius: 3 }} elevation={6}>
+            <Stack spacing={4} alignItems="center">
+              <Avatar sx={{ width: 96, height: 96, bgcolor: 'primary.main', fontSize: 28 }}>
+                {user.name ? user.name.split(' ').map(n => n[0]).join('').toUpperCase() : '?'}
+              </Avatar>
+
+              <Box textAlign="center">
+                <Typography variant="h4" sx={{
+                  fontWeight: 800,
+                  background: 'linear-gradient(90deg,#60a5fa 0%, #8b5cf6 100%)',
+                  WebkitBackgroundClip: 'text',
+                  WebkitTextFillColor: 'transparent',
+                }} gutterBottom>
+                  Добро пожаловать! 🎉
+                </Typography>
+
+                <Typography variant="h6" sx={{ fontWeight: 700 }}>
+                  {user.name}
+                </Typography>
+                <Typography variant="body2" color="text.secondary">
+                  {user.email}
+                </Typography>
+              </Box>
+
+              <Box sx={{ width: '100%', bgcolor: 'background.paper', p: 3, borderRadius: 2 }}>
+                <Typography variant="body1" color="text.primary">
+                  Вы успешно авторизованы в системе!
+                </Typography>
+                <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
+                  Роль: <strong>{user.role}</strong>
+                </Typography>
+              </Box>
+
+              <Box sx={{ width: '100%', textAlign: 'center' }}>
+                <Typography variant="body2" color="text.secondary">
+                  Ваш аккаунт был создан:{' '}
+                  <strong>{user.created_at ? new Date(user.created_at).toLocaleDateString('ru-RU') : '—'}</strong>
+                </Typography>
+              </Box>
+
+              <Box sx={{ width: '100%', p: 2, borderRadius: 1, bgcolor: 'purple.50', borderLeft: '4px solid', borderColor: 'purple.500' }}>
+                <Typography variant="body2" color="text.secondary">
+                  💡 Это защищенная страница. Используйте кнопку "Выход" в правом верхнем углу для завершения сессии.
+                </Typography>
+              </Box>
+            </Stack>
+          </Paper>
         </Box>
-    );
+      </Container>
+    </Box>
+  );
 };
+
+export default ProfilePage;
