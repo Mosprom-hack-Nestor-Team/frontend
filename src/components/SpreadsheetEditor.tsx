@@ -4,8 +4,14 @@ import {
     TextField,
     Paper,
     Chip,
+    Typography,
+    Stack,
+    Tooltip,
 } from '@mui/material';
 import { apiService, type CellUpdate, type SpreadsheetDetail } from '../services/api';
+import PeopleIcon from '@mui/icons-material/People';
+import EditIcon from '@mui/icons-material/Edit';
+import LockIcon from '@mui/icons-material/Lock';
 
 interface SpreadsheetEditorProps {
     spreadsheet: SpreadsheetDetail;
@@ -150,15 +156,12 @@ export const SpreadsheetEditor: React.FC<SpreadsheetEditorProps> = ({
 
     const handleCellChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const newValue = e.target.value;
-        // Только обновляем editValue для мгновенного отображения в TextField
-        // НЕ трогаем cells state, чтобы избежать ререндера всей таблицы
         setEditValue(newValue);
     };
 
     const handleCellBlur = async () => {
         if (!editingCell) return;
 
-        // Обновляем cells state и сохраняем на сервер
         const cellRef = getCellRef(editingCell.row, editingCell.col);
         const currentStyle = getCellStyle(editingCell.row, editingCell.col);
 
@@ -181,7 +184,6 @@ export const SpreadsheetEditor: React.FC<SpreadsheetEditorProps> = ({
         if (e.key === 'Enter') {
             e.preventDefault();
 
-            // Обновляем cells state перед сохранением
             const cellRef = getCellRef(editingCell.row, editingCell.col);
             const currentStyle = getCellStyle(editingCell.row, editingCell.col);
 
@@ -196,7 +198,6 @@ export const SpreadsheetEditor: React.FC<SpreadsheetEditorProps> = ({
 
             await saveCellToServer(editingCell.row, editingCell.col, editValue);
 
-            // Move to next row
             const nextRow = editingCell.row + 1;
             if (nextRow < spreadsheet.rows) {
                 setEditingCell({ row: nextRow, col: editingCell.col });
@@ -207,12 +208,10 @@ export const SpreadsheetEditor: React.FC<SpreadsheetEditorProps> = ({
                 setEditingCell(null);
             }
         } else if (e.key === 'Escape') {
-            // Отменяем редактирование без сохранения
             setEditingCell(null);
         } else if (e.key === 'Tab') {
             e.preventDefault();
 
-            // Обновляем cells state перед сохранением
             const cellRef = getCellRef(editingCell.row, editingCell.col);
             const currentStyle = getCellStyle(editingCell.row, editingCell.col);
 
@@ -227,7 +226,6 @@ export const SpreadsheetEditor: React.FC<SpreadsheetEditorProps> = ({
 
             await saveCellToServer(editingCell.row, editingCell.col, editValue);
 
-            // Move to next column
             const nextCol = editingCell.col + 1;
             if (nextCol < spreadsheet.cols) {
                 setEditingCell({ row: editingCell.row, col: nextCol });
@@ -252,10 +250,8 @@ export const SpreadsheetEditor: React.FC<SpreadsheetEditorProps> = ({
                 style: currentStyle,
             };
 
-            // Сохраняем на сервере
             await apiService.updateCell(spreadsheet.id, cellUpdate);
 
-            // Broadcast via WebSocket
             if (ws && ws.readyState === WebSocket.OPEN) {
                 ws.send(
                     JSON.stringify({
@@ -268,7 +264,6 @@ export const SpreadsheetEditor: React.FC<SpreadsheetEditorProps> = ({
             }
         } catch (error) {
             console.error('Failed to save cell:', error);
-            // В случае ошибки можно показать уведомление
         }
     };
 
@@ -310,7 +305,7 @@ export const SpreadsheetEditor: React.FC<SpreadsheetEditorProps> = ({
                             borderBottom: 'none',
                         },
                         '& .MuiInput-underline:after': {
-                            borderBottom: '2px solid #1976d2',
+                            borderBottom: '2px solid #002664',
                         },
                     }}
                     InputProps={{
@@ -329,8 +324,12 @@ export const SpreadsheetEditor: React.FC<SpreadsheetEditorProps> = ({
                     height: '100%',
                     padding: '8px',
                     cursor: canEdit ? 'cell' : 'default',
-                    backgroundColor: isSelected ? '#E3F2FD' : style.backgroundColor || 'transparent',
-                    border: isSelected ? '2px solid #1976d2' : '1px solid #e0e0e0',
+                    backgroundColor: isSelected 
+                        ? 'rgba(0, 38, 100, 0.08)' 
+                        : style.backgroundColor || 'transparent',
+                    border: isSelected 
+                        ? '2px solid #002664' 
+                        : '1px solid rgba(135, 200, 220, 0.3)',
                     fontWeight: style.bold ? 'bold' : 'normal',
                     fontStyle: style.italic ? 'italic' : 'normal',
                     color: style.color || 'inherit',
@@ -338,8 +337,12 @@ export const SpreadsheetEditor: React.FC<SpreadsheetEditorProps> = ({
                     textOverflow: 'ellipsis',
                     whiteSpace: 'nowrap',
                     fontSize: '14px',
+                    transition: 'all 0.2s ease-in-out',
                     '&:hover': canEdit ? {
-                        backgroundColor: isSelected ? '#E3F2FD' : '#f5f5f5',
+                        backgroundColor: isSelected 
+                            ? 'rgba(0, 38, 100, 0.08)' 
+                            : 'rgba(135, 200, 220, 0.1)',
+                        borderColor: '#002664',
                     } : {},
                 }}
             >
@@ -351,33 +354,124 @@ export const SpreadsheetEditor: React.FC<SpreadsheetEditorProps> = ({
     return (
         <Box>
             {/* Toolbar */}
-            <Paper sx={{ p: 2, mb: 2, display: 'flex', alignItems: 'center', gap: 2 }}>
-                <Box display="flex" gap={1} flexWrap="wrap">
-                    {activeUsers.map((user) => (
-                        <Chip
-                            key={user.email}
-                            label={user.email.split('@')[0]}
-                            size="small"
-                            sx={{
-                                backgroundColor: user.color,
-                                color: 'white',
+            <Paper 
+                elevation={0}
+                sx={{ 
+                    p: 3, 
+                    mb: 3, 
+                    display: 'flex', 
+                    alignItems: 'center', 
+                    justifyContent: 'space-between',
+                    borderRadius: 3,
+                    background: 'linear-gradient(135deg, #ffffff 0%, #fafbfc 100%)',
+                    border: '1px solid rgba(0, 38, 100, 0.1)',
+                    boxShadow: '0 4px 20px rgba(0, 38, 100, 0.08)',
+                }}
+            >
+                <Stack direction="row" alignItems="center" spacing={2}>
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                        {canEdit ? (
+                            <EditIcon sx={{ color: '#00afa5', fontSize: 24 }} />
+                        ) : (
+                            <LockIcon sx={{ color: '#87c8dc', fontSize: 24 }} />
+                        )}
+                        <Typography 
+                            variant="h6" 
+                            sx={{ 
+                                fontWeight: 600,
+                                color: '#002664'
                             }}
-                        />
-                    ))}
-                </Box>
+                        >
+                            {spreadsheet.title}
+                        </Typography>
+                    </Box>
+                    
+                    <Chip 
+                        label={canEdit ? 'Редактирование' : 'Только просмотр'}
+                        size="small"
+                        sx={{
+                            background: canEdit 
+                                ? 'linear-gradient(135deg, #00afa5 0%, #00c9b6 100%)'
+                                : 'linear-gradient(135deg, #87c8dc 0%, #a8d8ea 100%)',
+                            color: 'white',
+                            fontWeight: 600,
+                        }}
+                    />
+                </Stack>
+
+                <Stack direction="row" alignItems="center" spacing={2}>
+                    <PeopleIcon sx={{ color: '#002664' }} />
+                    <Typography 
+                        variant="body2" 
+                        sx={{ 
+                            fontWeight: 600,
+                            color: '#002664',
+                            minWidth: 100
+                        }}
+                    >
+                        Активные пользователи:
+                    </Typography>
+                    <Box display="flex" gap={1} flexWrap="wrap">
+                        {activeUsers.length > 0 ? (
+                            activeUsers.map((user) => (
+                                <Tooltip key={user.email} title={user.email}>
+                                    <Chip
+                                        label={user.email.split('@')[0]}
+                                        size="small"
+                                        sx={{
+                                            background: user.color,
+                                            color: 'white',
+                                            fontWeight: 600,
+                                            fontSize: '0.75rem',
+                                            '&:hover': {
+                                                transform: 'scale(1.05)',
+                                            },
+                                            transition: 'transform 0.2s ease-in-out',
+                                        }}
+                                    />
+                                </Tooltip>
+                            ))
+                        ) : (
+                            <Typography variant="body2" color="text.secondary">
+                                Только вы
+                            </Typography>
+                        )}
+                    </Box>
+                </Stack>
             </Paper>
 
             {/* Grid */}
-            <Paper sx={{ overflow: 'auto', maxHeight: '70vh' }}>
+            <Paper 
+                elevation={0}
+                sx={{ 
+                    overflow: 'auto', 
+                    maxHeight: '70vh',
+                    borderRadius: 3,
+                    background: 'linear-gradient(135deg, rgba(135, 200, 220, 0.05) 0%, rgba(15, 77, 188, 0.03) 100%)',
+                    border: '2px solid rgba(135, 200, 220, 0.3)',
+                    boxShadow: '0 4px 20px rgba(0, 38, 100, 0.08)',
+                }}
+            >
                 <Box sx={{ display: 'inline-block', minWidth: '100%' }}>
                     {/* Header row */}
-                    <Box sx={{ display: 'flex', position: 'sticky', top: 0, zIndex: 10, backgroundColor: '#f5f5f5' }}>
+                    <Box sx={{ 
+                        display: 'flex', 
+                        position: 'sticky', 
+                        top: 0, 
+                        zIndex: 10, 
+                        background: 'linear-gradient(135deg, #002664 0%, #0f4dbc 100%)',
+                    }}>
                         <Box
                             sx={{
                                 width: '60px',
                                 height: '40px',
-                                border: '1px solid #e0e0e0',
-                                backgroundColor: '#f5f5f5',
+                                border: '1px solid rgba(255,255,255,0.2)',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                fontWeight: 'bold',
+                                fontSize: '14px',
+                                color: 'white',
                             }}
                         />
                         {Array.from({ length: spreadsheet.cols }).map((_, col) => (
@@ -386,13 +480,13 @@ export const SpreadsheetEditor: React.FC<SpreadsheetEditorProps> = ({
                                 sx={{
                                     width: '120px',
                                     height: '40px',
-                                    border: '1px solid #e0e0e0',
-                                    backgroundColor: '#f5f5f5',
+                                    border: '1px solid rgba(255,255,255,0.2)',
                                     display: 'flex',
                                     alignItems: 'center',
                                     justifyContent: 'center',
                                     fontWeight: 'bold',
                                     fontSize: '14px',
+                                    color: 'white',
                                 }}
                             >
                                 {getColumnLabel(col)}
@@ -408,13 +502,14 @@ export const SpreadsheetEditor: React.FC<SpreadsheetEditorProps> = ({
                                 sx={{
                                     width: '60px',
                                     height: '40px',
-                                    border: '1px solid #e0e0e0',
-                                    backgroundColor: '#f5f5f5',
+                                    border: '1px solid rgba(135, 200, 220, 0.3)',
+                                    background: 'linear-gradient(135deg, #f8fafc 0%, #f0f4f8 100%)',
                                     display: 'flex',
                                     alignItems: 'center',
                                     justifyContent: 'center',
                                     fontWeight: 'bold',
                                     fontSize: '14px',
+                                    color: '#002664',
                                 }}
                             >
                                 {row + 1}
@@ -428,6 +523,7 @@ export const SpreadsheetEditor: React.FC<SpreadsheetEditorProps> = ({
                                         width: '120px',
                                         height: '40px',
                                         position: 'relative',
+                                        background: 'white',
                                     }}
                                 >
                                     {renderCell(row, col)}
