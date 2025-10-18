@@ -160,7 +160,7 @@ export const App: React.FC = () => {
                 <Route path="/register" element={<RegisterPage />} />
                 <Route
                   path="/profile"
-                  element={<ProfilePage user={user} />}
+                  element={<ProfilePage />}
                 />
                 {/* Пример маршрута таблицы (если требуется) */}
                 <Route

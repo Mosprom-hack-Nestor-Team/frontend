@@ -44,20 +44,6 @@ interface Task {
   status: 'active' | 'pending' | 'completed' | string;
 }
 
-/** Небольшая вспомогательная функция для статусов */
-const statusColor = (status: string, theme: ReturnType<typeof useTheme>) => {
-  switch (status) {
-    case 'active':
-      return theme.palette.success.main;
-    case 'pending':
-      return theme.palette.warning.main;
-    case 'completed':
-      return theme.palette.info.main;
-    default:
-      return theme.palette.grey[500];
-  }
-};
-
 const StatCard: React.FC<Stat> = ({ title, value, change, isPositive }) => {
   return (
     <Paper
@@ -89,7 +75,7 @@ const StatCard: React.FC<Stat> = ({ title, value, change, isPositive }) => {
 
 const TaskCard: React.FC<Task> = ({ title, progress, status }) => {
   const theme = useTheme();
-  const bg = statusColor(status, theme);
+  const bg = "black";
 
   return (
     <Paper
@@ -169,14 +155,7 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
           <Typography color="text.secondary">Обзор ключевых метрик и статистики</Typography>
         </Box>
 
-        {/* Statistics */}
-        <Grid container spacing={3}>
-          {stats.map((s, idx) => (
-            <Grid item key={idx} xs={12} sm={6} md={3}>
-              <StatCard {...s} />
-            </Grid>
-          ))}
-        </Grid>
+        
 
         {/* Tasks */}
         <Box>
@@ -198,13 +177,7 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
             ) : null}
           </Box>
 
-          <Grid container spacing={3}>
-            {tasks.map((task, idx) => (
-              <Grid item key={idx} xs={12} md={6}>
-                <TaskCard {...task} />
-              </Grid>
-            ))}
-          </Grid>
+          
         </Box>
 
         {/* Additional Info */}

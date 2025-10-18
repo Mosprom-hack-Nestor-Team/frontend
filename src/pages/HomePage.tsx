@@ -150,29 +150,10 @@ export const HomePage: React.FC = () => {
           </Box>
 
           <Grid container spacing={{ xs: 3, md: 4 }}>
-            <Grid item xs={12} md={4}>
-              <Feature
-                icon={<StorageIcon sx={{ fontSize: 28, color: 'common.white' }} />}
-                title="Управление данными"
-                text="Эффективная работа с большими объемами данных и их структурирование"
-              />
-            </Grid>
 
-            <Grid item xs={12} md={4}>
-              <Feature
-                icon={<TrendingUpIcon sx={{ fontSize: 28, color: 'common.white' }} />}
-                title="Аналитика"
-                text="Продвинутые инструменты для анализа и визуализации данных"
-              />
-            </Grid>
+           
 
-            <Grid item xs={12} md={4}>
-              <Feature
-                icon={<GroupIcon sx={{ fontSize: 28, color: 'common.white' }} />}
-                title="Командная работа"
-                text="Совместная работа в режиме реального времени"
-              />
-            </Grid>
+            
           </Grid>
         </Stack>
       </Container>
