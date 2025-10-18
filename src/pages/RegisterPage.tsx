@@ -1,26 +1,31 @@
+import React, { useState } from 'react';
 import {
   Box,
   Container,
-  Heading,
-  Text,
+  Paper,
   Stack,
-  Input,
+  Typography,
+  TextField,
+  InputAdornment,
   Button,
-  Flex,
-  Link as ChakraLink,
-} from '@chakra-ui/react';
-import { useState } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
-import { FiMail, FiLock, FiUser } from 'react-icons/fi';
+  CircularProgress,
+  Link as MuiLink,
+} from '@mui/material';
+import PersonIcon from '@mui/icons-material/Person';
+import MailOutlineIcon from '@mui/icons-material/MailOutline';
+import LockIcon from '@mui/icons-material/Lock';
+import { Link, useNavigate } from 'react-router-dom';
 import { apiService } from '../services/api';
 
-export const RegisterPage = () => {
+type RegisterForm = {
+  name: string;
+  email: string;
+  password: string;
+};
+
+export const RegisterPage: React.FC = () => {
   const navigate = useNavigate();
-  const [formData, setFormData] = useState({
-    name: '',
-    email: '',
-    password: '',
-  });
+  const [formData, setFormData] = useState<RegisterForm>({ name: '', email: '', password: '' });
   const [isLoading, setIsLoading] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -31,6 +36,7 @@ export const RegisterPage = () => {
       await apiService.register(formData);
       navigate('/profile');
     } catch (error) {
+      // eslint-disable-next-line no-alert
       alert(error instanceof Error ? error.message : 'Ошибка регистрации');
     } finally {
       setIsLoading(false);
@@ -38,137 +44,101 @@ export const RegisterPage = () => {
   };
 
   return (
-    <Box minH="calc(100vh - 64px)" bg="gray.50" py={20}>
-      <Container maxW="md">
-        <Box bg="white" p={8} rounded="xl" shadow="lg">
-          <Stack gap={6}>
-            {/* Header */}
+    <Box sx={{ minHeight: 'calc(100vh - 64px)', bgcolor: 'background.default', py: { xs: 6, md: 12 } }}>
+      <Container maxWidth="sm">
+        <Paper elevation={6} sx={{ p: { xs: 3, md: 6 }, borderRadius: 2 }}>
+          <Stack spacing={3}>
             <Box textAlign="center">
-              <Heading
-                fontSize="3xl"
-                bgGradient="to-r"
-                gradientFrom="blue.400"
-                gradientTo="purple.500"
-                bgClip="text"
-                mb={2}
-              >
+              <Typography variant="h4" sx={{
+                background: 'linear-gradient(90deg,#60a5fa 0%, #8b5cf6 100%)',
+                WebkitBackgroundClip: 'text',
+                WebkitTextFillColor: 'transparent',
+                fontWeight: 800,
+              }} gutterBottom>
                 Создать аккаунт
-              </Heading>
-              <Text color="gray.600">
-                Присоединяйтесь к нам и начните работу
-              </Text>
+              </Typography>
+              <Typography color="text.secondary">Присоединяйтесь к нам и начните работу</Typography>
             </Box>
 
-            {/* Form */}
-            <form onSubmit={handleSubmit}>
-              <Stack gap={4}>
-                <Box>
-                  <Text fontSize="sm" fontWeight="medium" mb={2}>
-                    Имя
-                  </Text>
-                  <Flex align="center" gap={2} bg="gray.50" p={3} rounded="md" border="1px" borderColor="gray.200">
-                    <Box color="gray.500">
-                      <FiUser />
-                    </Box>
-                    <Input
-                      type="text"
-                      placeholder="Иван Иванов"
-                      value={formData.name}
-                      onChange={(e) =>
-                        setFormData({ ...formData, name: e.target.value })
-                      }
-                      required
-                      border="none"
-                      bg="transparent"
-                      p={0}
-                      _focus={{ outline: 'none' }}
-                    />
-                  </Flex>
-                </Box>
+            <Box component="form" onSubmit={handleSubmit}>
+              <Stack spacing={2}>
+                <TextField
+                  label="Имя"
+                  required
+                  value={formData.name}
+                  onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
+                  InputProps={{
+                    startAdornment: (
+                      <InputAdornment position="start">
+                        <PersonIcon color="action" />
+                      </InputAdornment>
+                    ),
+                  }}
+                  fullWidth
+                />
 
-                <Box>
-                  <Text fontSize="sm" fontWeight="medium" mb={2}>
-                    Email
-                  </Text>
-                  <Flex align="center" gap={2} bg="gray.50" p={3} rounded="md" border="1px" borderColor="gray.200">
-                    <Box color="gray.500">
-                      <FiMail />
-                    </Box>
-                    <Input
-                      type="email"
-                      placeholder="your@email.com"
-                      value={formData.email}
-                      onChange={(e) =>
-                        setFormData({ ...formData, email: e.target.value })
-                      }
-                      required
-                      border="none"
-                      bg="transparent"
-                      p={0}
-                      _focus={{ outline: 'none' }}
-                    />
-                  </Flex>
-                </Box>
+                <TextField
+                  label="Email"
+                  type="email"
+                  required
+                  value={formData.email}
+                  onChange={(e) => setFormData(prev => ({ ...prev, email: e.target.value }))}
+                  InputProps={{
+                    startAdornment: (
+                      <InputAdornment position="start">
+                        <MailOutlineIcon color="action" />
+                      </InputAdornment>
+                    ),
+                  }}
+                  fullWidth
+                />
 
-                <Box>
-                  <Text fontSize="sm" fontWeight="medium" mb={2}>
-                    Пароль
-                  </Text>
-                  <Flex align="center" gap={2} bg="gray.50" p={3} rounded="md" border="1px" borderColor="gray.200">
-                    <Box color="gray.500">
-                      <FiLock />
-                    </Box>
-                    <Input
-                      type="password"
-                      placeholder="••••••••"
-                      value={formData.password}
-                      onChange={(e) =>
-                        setFormData({ ...formData, password: e.target.value })
-                      }
-                      required
-                      minLength={8}
-                      border="none"
-                      bg="transparent"
-                      p={0}
-                      _focus={{ outline: 'none' }}
-                    />
-                  </Flex>
-                  <Text fontSize="xs" color="gray.500" mt={1}>
-                    Минимум 8 символов
-                  </Text>
-                </Box>
+                <TextField
+                  label="Пароль"
+                  type="password"
+                  required
+                  value={formData.password}
+                  onChange={(e) => setFormData(prev => ({ ...prev, password: e.target.value }))}
+                  inputProps={{ minLength: 8 }}
+                  InputProps={{
+                    startAdornment: (
+                      <InputAdornment position="start">
+                        <LockIcon color="action" />
+                      </InputAdornment>
+                    ),
+                  }}
+                  helperText="Минимум 8 символов"
+                  fullWidth
+                />
 
                 <Button
                   type="submit"
-                  colorPalette="blue"
-                  size="lg"
-                  w="full"
-                  mt={2}
-                  loading={isLoading}
+                  variant="contained"
+                  size="large"
+                  fullWidth
+                  disabled={isLoading}
+                  startIcon={isLoading ? <CircularProgress color="inherit" size={18} /> : undefined}
                 >
-                  Зарегистрироваться
+                  {isLoading ? 'Регистрация...' : 'Зарегистрироваться'}
                 </Button>
               </Stack>
-            </form>
+            </Box>
 
-            {/* Login Link */}
-            <Box textAlign="center" pt={4} borderTop="1px" borderColor="gray.200">
-              <Text color="gray.600">
+            <Box textAlign="center" pt={2}>
+              <Typography variant="body2" color="text.secondary">
                 Уже есть аккаунт?{' '}
-                <Link to="/login">
-                  <ChakraLink
-                    color="blue.500"
-                    fontWeight="semibold"
-                    _hover={{ textDecoration: 'underline' }}
-                  >
+                <Link to="/login" style={{ textDecoration: 'none' }}>
+                  <MuiLink component="span" sx={{ color: 'primary.main', fontWeight: 600 }}>
                     Войти
-                  </ChakraLink>
+                  </MuiLink>
                 </Link>
-              </Text>
+              </Typography>
             </Box>
           </Stack>
-        </Box>
+        </Paper>
       </Container>
     </Box>
   );
 };
+
+export default RegisterPage;
