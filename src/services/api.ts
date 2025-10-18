@@ -2,7 +2,10 @@
  * API Service for authentication and user management
  */
 
-const API_BASE_URL = 'http://localhost:7878/api/v1';
+const API_BASE_URL =
+  (typeof import.meta !== 'undefined' && (import.meta as any).env?.VITE_API_BASE_URL) ||
+  (typeof process !== 'undefined' && (process as any).env?.VITE_API_BASE_URL) ||
+  'http://localhost:7878/api/v1';
 
 export interface UserData {
     id: number;
