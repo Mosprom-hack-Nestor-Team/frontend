@@ -175,7 +175,7 @@ export const HomePage: React.FC = () => {
                 mb: 2,
               }}
             >
-              Добро пожаловать в наше приложение
+              Добро пожаловать в AeroDocs
             </Typography>
 
             <Typography
@@ -218,7 +218,7 @@ export const HomePage: React.FC = () => {
                   transition: 'all 0.3s ease-in-out',
                 }}
               >
-                Перейти к Dashboard
+                Перейти к AeroDocs
               </Button>
 
               <Button

@@ -27,7 +27,7 @@ export const Footer: React.FC = () => {
               fontSize: '1.1rem'
             }}
           >
-            © 2025 Nestor Team. Все права защищены.
+            © 2025 AeroDocs. Все права защищены.
           </Typography>
 
           <Stack 
@@ -106,7 +106,7 @@ export const Footer: React.FC = () => {
               lineHeight: 1.6
             }}
           >
-            Создано с ❤️ командой Nestor для эффективной работы с данными и аналитикой
+            Создано с ❤️ командой Nestor team для эффективной работы с данными и аналитикой
           </Typography>
         </Box>
       </Container>
