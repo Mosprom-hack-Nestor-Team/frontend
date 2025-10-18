@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import {
   Container,
   Box,
@@ -11,6 +11,8 @@ import {
   useTheme,
   Button,
 } from '@mui/material';
+import { useNavigate } from 'react-router-dom';
+import { apiService } from '../services/api';
 
 type Table = {
   id: string;
@@ -130,6 +132,16 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
   onDeleteTable,
   onOpenTable,
 }) => {
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    // Check if user is authenticated
+    if (!apiService.isAuthenticated()) {
+      navigate('/login');
+      return;
+    }
+  }, [navigate]);
+
   // Данные по умолчанию, если не переданы пропсы
   const stats: Stat[] = [
     { title: 'Всего пользователей', value: '1,234', change: '12%', isPositive: true },

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import {
   Box,
@@ -18,6 +18,7 @@ import { AboutPage } from './pages/AboutPage';
 import { LoginPage } from './pages/LoginPage';
 import { RegisterPage } from './pages/RegisterPage';
 import { ProfilePage } from './pages/ProfilePage';
+import { apiService, type UserData } from './services/api';
 
 /**
  * Типы (адаптируй под свою модель)
@@ -75,9 +76,16 @@ export const App: React.FC = () => {
     message: '',
   });
 
-  const user = {
-    name: 'Алексей Гульчак',
-    role: 'Администратор',
+  // Получаем данные пользователя из localStorage
+  const [user, setUser] = useState<UserData | null>(null);
+
+  useEffect(() => {
+    const storedUser = apiService.getStoredUser();
+    setUser(storedUser);
+  }, []);
+
+  const handleLogout = () => {
+    setUser(null);
   };
 
   // Функции для Dashboard
@@ -138,7 +146,7 @@ export const App: React.FC = () => {
       <CssBaseline />
       <Router>
         <Box display="flex" flexDirection="column" minHeight="100vh">
-          <Navbar user={user} />
+          <Navbar user={user || undefined} onLogout={handleLogout} />
           <Box component="main" flex="1">
             <Container maxWidth="xl" sx={{ py: { xs: 4, md: 6 } }}>
               <Routes>
