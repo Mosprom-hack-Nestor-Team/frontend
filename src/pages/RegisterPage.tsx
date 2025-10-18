@@ -1,165 +1,235 @@
+import React, { useState } from 'react';
 import {
   Box,
   Container,
-  Heading,
-  Text,
+  Paper,
   Stack,
-  Input,
+  Typography,
+  TextField,
+  InputAdornment,
   Button,
-  Flex,
-  Link as ChakraLink,
-} from '@chakra-ui/react';
-import { useState } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
-import { FiMail, FiLock, FiUser } from 'react-icons/fi';
+  CircularProgress,
+  Link as MuiLink,
+  Alert,
+} from '@mui/material';
+import PersonIcon from '@mui/icons-material/Person';
+import MailOutlineIcon from '@mui/icons-material/MailOutline';
+import LockIcon from '@mui/icons-material/Lock';
+import TableChartIcon from '@mui/icons-material/TableChart';
+import { Link } from 'react-router-dom';
+import { apiService } from '../services/api';
+import AeroLinesBackground from '../components/AeroLinesBackground';
 
-export const RegisterPage = () => {
-  const navigate = useNavigate();
-  const [formData, setFormData] = useState({
-    name: '',
-    email: '',
-    password: '',
-  });
+type RegisterForm = {
+  name: string;
+  email: string;
+  password: string;
+};
 
-  const handleSubmit = (e: React.FormEvent) => {
+export const RegisterPage: React.FC = () => {
+  const [formData, setFormData] = useState<RegisterForm>({ name: '', email: '', password: '' });
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string>('');
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
-    // Здесь будет логика регистрации
-    console.log('Register:', formData);
-    navigate('/dashboard');
+    setIsLoading(true);
+    setError('');
+
+    try {
+      await apiService.register(formData);
+      // Перезагружаем страницу чтобы обновить состояние пользователя
+      window.location.href = '/dashboard';
+    } catch (error) {
+      setError(error instanceof Error ? error.message : 'Ошибка регистрации');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
-    <Box minH="calc(100vh - 64px)" bg="gray.50" py={20}>
-      <Container maxW="md">
-        <Box bg="white" p={8} rounded="xl" shadow="lg">
-          <Stack gap={6}>
-            {/* Header */}
+    <Box sx={{ position: 'relative', minHeight: '100vh' }}>
+      <AeroLinesBackground />
+      <Container maxWidth="sm" sx={{ py: { xs: 8, md: 12 }, position: 'relative' }}>
+        <Paper 
+          elevation={0}
+          sx={{ 
+            p: { xs: 4, md: 6 }, 
+            borderRadius: 3,
+            background: 'linear-gradient(135deg, #ffffff 0%, #fafbfc 100%)',
+            border: '1px solid',
+            borderColor: 'rgba(0, 38, 100, 0.1)',
+            boxShadow: '0 8px 32px rgba(0, 38, 100, 0.12)',
+          }}
+        >
+          <Stack spacing={4}>
+            {/* Заголовок */}
             <Box textAlign="center">
-              <Heading
-                fontSize="3xl"
-                bgGradient="to-r"
-                gradientFrom="blue.400"
-                gradientTo="purple.500"
-                bgClip="text"
-                mb={2}
+              <Box
+                sx={{
+                  background: 'linear-gradient(135deg, #002664 0%, #0f4dbc 100%)',
+                  borderRadius: 3,
+                  p: 2,
+                  width: 70,
+                  height: 70,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  mx: 'auto',
+                  mb: 3,
+                }}
+              >
+                <TableChartIcon sx={{ color: 'white', fontSize: 32 }} />
+              </Box>
+              <Typography
+                variant="h4"
+                sx={{
+                  fontWeight: 700,
+                  background: 'linear-gradient(135deg, #002664 0%, #0f4dbc 100%)',
+                  backgroundClip: 'text',
+                  WebkitBackgroundClip: 'text',
+                  color: 'transparent',
+                  mb: 1,
+                }}
               >
                 Создать аккаунт
-              </Heading>
-              <Text color="gray.600">
+              </Typography>
+              <Typography variant="body1" color="text.secondary" sx={{ fontWeight: 400 }}>
                 Присоединяйтесь к нам и начните работу
-              </Text>
+              </Typography>
             </Box>
 
-            {/* Form */}
-            <form onSubmit={handleSubmit}>
-              <Stack gap={4}>
-                <Box>
-                  <Text fontSize="sm" fontWeight="medium" mb={2}>
-                    Имя
-                  </Text>
-                  <Flex align="center" gap={2} bg="gray.50" p={3} rounded="md" border="1px" borderColor="gray.200">
-                    <Box color="gray.500">
-                      <FiUser />
-                    </Box>
-                    <Input
-                      type="text"
-                      placeholder="Иван Иванов"
-                      value={formData.name}
-                      onChange={(e) =>
-                        setFormData({ ...formData, name: e.target.value })
-                      }
-                      required
-                      border="none"
-                      bg="transparent"
-                      p={0}
-                      _focus={{ outline: 'none' }}
-                    />
-                  </Flex>
-                </Box>
+            {error && (
+              <Alert severity="error" onClose={() => setError('')} sx={{ borderRadius: 2 }}>
+                {error}
+              </Alert>
+            )}
 
-                <Box>
-                  <Text fontSize="sm" fontWeight="medium" mb={2}>
-                    Email
-                  </Text>
-                  <Flex align="center" gap={2} bg="gray.50" p={3} rounded="md" border="1px" borderColor="gray.200">
-                    <Box color="gray.500">
-                      <FiMail />
-                    </Box>
-                    <Input
-                      type="email"
-                      placeholder="your@email.com"
-                      value={formData.email}
-                      onChange={(e) =>
-                        setFormData({ ...formData, email: e.target.value })
-                      }
-                      required
-                      border="none"
-                      bg="transparent"
-                      p={0}
-                      _focus={{ outline: 'none' }}
-                    />
-                  </Flex>
-                </Box>
+            {/* Форма */}
+            <Box component="form" onSubmit={handleSubmit}>
+              <Stack spacing={3}>
+                <TextField
+                  label="Имя"
+                  required
+                  value={formData.name}
+                  onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
+                  InputProps={{
+                    startAdornment: (
+                      <InputAdornment position="start">
+                        <PersonIcon sx={{ color: '#002664' }} />
+                      </InputAdornment>
+                    ),
+                  }}
+                  fullWidth
+                  sx={{
+                    '& .MuiOutlinedInput-root': {
+                      borderRadius: 2,
+                      '&:hover fieldset': {
+                        borderColor: '#002664',
+                      },
+                    }
+                  }}
+                />
 
-                <Box>
-                  <Text fontSize="sm" fontWeight="medium" mb={2}>
-                    Пароль
-                  </Text>
-                  <Flex align="center" gap={2} bg="gray.50" p={3} rounded="md" border="1px" borderColor="gray.200">
-                    <Box color="gray.500">
-                      <FiLock />
-                    </Box>
-                    <Input
-                      type="password"
-                      placeholder="••••••••"
-                      value={formData.password}
-                      onChange={(e) =>
-                        setFormData({ ...formData, password: e.target.value })
-                      }
-                      required
-                      minLength={8}
-                      border="none"
-                      bg="transparent"
-                      p={0}
-                      _focus={{ outline: 'none' }}
-                    />
-                  </Flex>
-                  <Text fontSize="xs" color="gray.500" mt={1}>
-                    Минимум 8 символов
-                  </Text>
-                </Box>
+                <TextField
+                  label="Email"
+                  type="email"
+                  required
+                  value={formData.email}
+                  onChange={(e) => setFormData(prev => ({ ...prev, email: e.target.value }))}
+                  InputProps={{
+                    startAdornment: (
+                      <InputAdornment position="start">
+                        <MailOutlineIcon sx={{ color: '#002664' }} />
+                      </InputAdornment>
+                    ),
+                  }}
+                  fullWidth
+                  sx={{
+                    '& .MuiOutlinedInput-root': {
+                      borderRadius: 2,
+                      '&:hover fieldset': {
+                        borderColor: '#002664',
+                      },
+                    }
+                  }}
+                />
+
+                <TextField
+                  label="Пароль"
+                  type="password"
+                  required
+                  value={formData.password}
+                  onChange={(e) => setFormData(prev => ({ ...prev, password: e.target.value }))}
+                  inputProps={{ minLength: 8 }}
+                  InputProps={{
+                    startAdornment: (
+                      <InputAdornment position="start">
+                        <LockIcon sx={{ color: '#002664' }} />
+                      </InputAdornment>
+                    ),
+                  }}
+                  helperText="Минимум 8 символов"
+                  fullWidth
+                  sx={{
+                    '& .MuiOutlinedInput-root': {
+                      borderRadius: 2,
+                      '&:hover fieldset': {
+                        borderColor: '#002664',
+                      },
+                    }
+                  }}
+                />
 
                 <Button
                   type="submit"
-                  colorPalette="blue"
-                  size="lg"
-                  w="full"
-                  mt={2}
+                  variant="contained"
+                  size="large"
+                  fullWidth
+                  disabled={isLoading}
+                  startIcon={isLoading ? <CircularProgress color="inherit" size={20} /> : undefined}
+                  sx={{
+                    background: 'linear-gradient(135deg, #002664 0%, #0f4dbc 100%)',
+                    borderRadius: 2,
+                    py: 1.5,
+                    fontWeight: 600,
+                    fontSize: '1rem',
+                    '&:hover': {
+                      background: 'linear-gradient(135deg, #0f4dbc 0%, #002664 100%)',
+                    },
+                    transition: 'all 0.3s ease-in-out',
+                  }}
                 >
-                  Зарегистрироваться
+                  {isLoading ? 'Регистрация...' : 'Зарегистрироваться'}
                 </Button>
               </Stack>
-            </form>
+            </Box>
 
-            {/* Login Link */}
-            <Box textAlign="center" pt={4} borderTop="1px" borderColor="gray.200">
-              <Text color="gray.600">
+            {/* Ссылка на вход */}
+            <Box textAlign="center" pt={2}>
+              <Typography variant="body1" color="text.secondary">
                 Уже есть аккаунт?{' '}
-                <Link to="/login">
-                  <ChakraLink
-                    color="blue.500"
-                    fontWeight="semibold"
-                    _hover={{ textDecoration: 'underline' }}
+                <Link to="/login" style={{ textDecoration: 'none' }}>
+                  <MuiLink 
+                    component="span" 
+                    sx={{ 
+                      color: '#002664', 
+                      fontWeight: 600,
+                      '&:hover': {
+                        color: '#0f4dbc',
+                      }
+                    }}
                   >
                     Войти
-                  </ChakraLink>
+                  </MuiLink>
                 </Link>
-              </Text>
+              </Typography>
             </Box>
           </Stack>
-        </Box>
+        </Paper>
       </Container>
     </Box>
   );
 };
+
+export default RegisterPage;
