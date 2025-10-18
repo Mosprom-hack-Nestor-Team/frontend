@@ -9,9 +9,11 @@ import {
 import {
   Add as AddIcon,
   Search as SearchIcon,
-  TableChart as TableIcon
+  TableChart as TableIcon,
+  CloudUpload as UploadIcon
 } from '@mui/icons-material';
 import TableCard, { type TableInfo } from './TableCard';
+import { useNavigate } from 'react-router-dom';
 
 interface DashboardProps {
   tables: TableInfo[];
@@ -28,6 +30,12 @@ const Dashboard: React.FC<DashboardProps> = ({
   onTableDelete,
   onTableOpen
 }) => {
+  const navigate = useNavigate();
+
+  const handleUploadClick = () => {
+    navigate('/upload');
+  };
+
   return (
     <Container maxWidth="xl" sx={{ py: 4, px: 3 }}>
       {/* Заголовок и поиск */}
@@ -80,6 +88,30 @@ const Dashboard: React.FC<DashboardProps> = ({
             }}
           />
           <Button
+            variant="outlined"
+            startIcon={<UploadIcon />}
+            onClick={handleUploadClick}
+            size="large"
+            sx={{
+              borderColor: '#002664',
+              color: '#002664',
+              borderRadius: 2,
+              px: 3,
+              py: 1,
+              fontWeight: 600,
+              '&:hover': {
+                borderColor: '#0f4dbc',
+                backgroundColor: 'rgba(15, 77, 188, 0.04)',
+                transform: 'translateY(-1px)',
+              },
+              transition: 'all 0.2s ease-in-out',
+              whiteSpace: 'nowrap',
+              minWidth: 'auto'
+            }}
+          >
+            Загрузить
+          </Button>
+          <Button
             variant="contained"
             startIcon={<AddIcon />}
             onClick={onTableCreate}
@@ -105,7 +137,7 @@ const Dashboard: React.FC<DashboardProps> = ({
         </Box>
       </Box>
 
-      {/* СЕТКА С КАРТОЧКАМИ - ИСПРАВЛЕННАЯ */}
+      {/* СЕТКА С КАРТОЧКАМИ */}
       {tables.length > 0 ? (
         <Box 
           sx={{
@@ -149,24 +181,46 @@ const Dashboard: React.FC<DashboardProps> = ({
             Нет таблиц
           </Typography>
           <Typography variant="body1" color="text.secondary" sx={{ mb: 4, maxWidth: 400, mx: 'auto' }}>
-            Создайте свою первую таблицу для управления данными и начните работать эффективнее
+            Создайте свою первую таблицу для управления данными или загрузите данные из Excel/CSV файла
           </Typography>
-          <Button
-            variant="contained"
-            startIcon={<AddIcon />}
-            onClick={onTableCreate}
-            size="large"
-            sx={{
-              background: 'linear-gradient(135deg, #002664 0%, #0f4dbc 100%)',
-              borderRadius: 2,
-              px: 4,
-              py: 1.5,
-              fontWeight: 600,
-              fontSize: '1.1rem'
-            }}
-          >
-            Создать первую таблицу
-          </Button>
+          <Box sx={{ display: 'flex', gap: 2, justifyContent: 'center', flexWrap: 'wrap' }}>
+            <Button
+              variant="outlined"
+              startIcon={<UploadIcon />}
+              onClick={handleUploadClick}
+              size="large"
+              sx={{
+                borderColor: '#002664',
+                color: '#002664',
+                borderRadius: 2,
+                px: 4,
+                py: 1.5,
+                fontWeight: 600,
+                '&:hover': {
+                  borderColor: '#0f4dbc',
+                  backgroundColor: 'rgba(15, 77, 188, 0.04)',
+                },
+              }}
+            >
+              Загрузить из файла
+            </Button>
+            <Button
+              variant="contained"
+              startIcon={<AddIcon />}
+              onClick={onTableCreate}
+              size="large"
+              sx={{
+                background: 'linear-gradient(135deg, #002664 0%, #0f4dbc 100%)',
+                borderRadius: 2,
+                px: 4,
+                py: 1.5,
+                fontWeight: 600,
+                fontSize: '1.1rem'
+              }}
+            >
+              Создать таблицу
+            </Button>
+          </Box>
         </Box>
       )}
     </Container>
