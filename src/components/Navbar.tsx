@@ -52,6 +52,7 @@ export const Navbar: React.FC<NavbarProps> = ({ user, onLogout, notificationCoun
     ? [
         { label: 'Главная', path: '/' },
         { label: 'Dashboard', path: '/dashboard' },
+        { label: 'Отдел', path: '/department' },
         { label: 'О нас', path: '/about' },
       ]
     : [
