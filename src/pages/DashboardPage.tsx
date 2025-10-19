@@ -6,27 +6,186 @@ import {
   Stack,
   Paper,
   useTheme,
+  Button,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
 } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
 import { apiService } from '../services/api';
 import { SpreadsheetList } from '../components/SpreadsheetList';
 import DashboardIcon from '@mui/icons-material/Dashboard';
+import CloudUploadIcon from '@mui/icons-material/CloudUpload';
+import InsertDriveFileIcon from '@mui/icons-material/InsertDriveFile';
+import { Notification } from '../components/Notification';
+import type { NotificationType } from '../components/Notification';
+import { DataAnonymizationDialog } from '../components/DataAnonymizationDialog';
 
 export const DashboardPage: React.FC = () => {
   const navigate = useNavigate();
   const theme = useTheme();
   const [stats, setStats] = useState<any | null>(null);
+  const [importDialogOpen, setImportDialogOpen] = useState(false);
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [importLoading, setImportLoading] = useState(false);
+  const [notification, setNotification] = useState<{
+    open: boolean;
+    type: NotificationType;
+    title: string;
+    message?: string;
+    progress?: number;
+  }>({
+    open: false,
+    type: 'info',
+    title: '',
+  });
+
+  const [anonymizationDialog, setAnonymizationDialog] = useState<{
+    open: boolean;
+    fileName: string;
+    findings: any[];
+  }>({
+    open: false,
+    fileName: '',
+    findings: [],
+  });
 
   useEffect(() => {
-    // Check if user is authenticated
     if (!apiService.isAuthenticated()) {
       navigate('/login');
       return;
     }
-    // Log visit and load stats
     apiService.logVisit('dashboard').catch(() => {});
     apiService.getStatsSummary(7).then(setStats).catch(() => {});
   }, [navigate]);
+
+  // Функция для показа уведомлений
+  const showNotification = (type: NotificationType, title: string, message?: string, progress?: number) => {
+    setNotification({
+      open: true,
+      type,
+      title,
+      message,
+      progress,
+    });
+  };
+
+  // Имитация AI-анализа файла
+  const analyzeFileForSensitiveData = async (file: File): Promise<any[]> => {
+    return new Promise((resolve) => {
+      setTimeout(() => {
+        const mockFindings = [
+          {
+            type: 'Email адреса',
+            count: Math.floor(Math.random() * 10) + 1,
+            description: 'Обнаружены email адреса сотрудников',
+            risk: 'high' as const,
+          },
+          {
+            type: 'Телефоны',
+            count: Math.floor(Math.random() * 5) + 1,
+            description: 'Найдены номера телефонов',
+            risk: 'medium' as const,
+          },
+          {
+            type: 'Имена',
+            count: Math.floor(Math.random() * 15) + 1,
+            description: 'Обнаружены полные имена',
+            risk: 'medium' as const,
+          },
+        ];
+        resolve(mockFindings);
+      }, 1500);
+    });
+  };
+
+  const handleFileSelect = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    showNotification('loading', 'Анализ файла', 'Проверяем на наличие конфиденциальных данных...');
+
+    try {
+      // AI-анализ файла
+      const findings = await analyzeFileForSensitiveData(file);
+      
+      setNotification({ open: false, type: 'info', title: '' });
+
+      if (findings.length > 0) {
+        // Показываем диалог подтверждения обезличивания
+        setAnonymizationDialog({
+          open: true,
+          fileName: file.name,
+          findings,
+        });
+      } else {
+        // Если находок нет, сразу загружаем
+        setSelectedFile(file);
+        setImportDialogOpen(true);
+        showNotification('success', 'Файл проверен', 'Конфиденциальные данные не обнаружены');
+      }
+    } catch (error) {
+      showNotification('error', 'Ошибка анализа', 'Не удалось проанализировать файл');
+    }
+  };
+
+  const handleAnonymizationConfirm = async (confirmed: boolean) => {
+    setAnonymizationDialog(prev => ({ ...prev, open: false }));
+
+    if (confirmed && selectedFile) {
+      setImportDialogOpen(true);
+      showNotification('success', 'Подтверждение получено', 'Приступаем к импорту файла');
+    } else {
+      showNotification('warning', 'Загрузка отменена', 'Подтверждение обезличивания не получено');
+    }
+  };
+
+  const handleImport = async () => {
+    if (!selectedFile) return;
+
+    setImportLoading(true);
+    showNotification('loading', 'Импорт файла', 'Создаем таблицу и обрабатываем данные...', 0);
+
+    try {
+      // Имитация прогресса
+      const progressInterval = setInterval(() => {
+        setNotification(prev => ({
+          ...prev,
+          progress: Math.min((prev.progress || 0) + 10, 90)
+        }));
+      }, 300);
+
+      const fileName = selectedFile.name.replace(/\.[^/.]+$/, "");
+      const spreadsheetData = {
+        title: fileName,
+        rows: 100,
+        cols: 26,
+      };
+
+      const newSpreadsheet = await apiService.createSpreadsheet(spreadsheetData);
+      
+      clearInterval(progressInterval);
+      showNotification('loading', 'Завершение импорта', 'Финальная обработка...', 95);
+
+      // Небольшая задержка для плавности
+      await new Promise(resolve => setTimeout(resolve, 500));
+
+      setImportDialogOpen(false);
+      setSelectedFile(null);
+      
+      showNotification('success', 'Файл импортирован', `Таблица "${fileName}" успешно создана`);
+      
+      setTimeout(() => {
+        navigate(`/spreadsheet/${newSpreadsheet.id}`);
+      }, 1000);
+
+    } catch (error) {
+      showNotification('error', 'Ошибка импорта', 'Не удалось создать таблицу из файла');
+    } finally {
+      setImportLoading(false);
+    }
+  };
 
   return (
     <Box sx={{ 
@@ -250,14 +409,35 @@ export const DashboardPage: React.FC = () => {
                   justifyContent: 'center',
                 }}
               >
+                <input
+                  type="file"
+                  accept=".xlsx,.xls,.csv"
+                  onChange={handleFileSelect}
+                  style={{ display: 'none' }}
+                  id="file-upload-input"
+                />
+                
                 {[
-                  { label: 'Новая таблица', color: '#002664' },
-                  { label: 'Импорт данных', color: '#0f4dbc' },
-                  { label: 'Использовать шаблон', color: '#00afa5' }
+                  { 
+                    label: 'Новая таблица', 
+                    color: '#002664',
+                    onClick: () => {/* логика создания новой таблицы */}
+                  },
+                  { 
+                    label: 'Импорт данных', 
+                    color: '#0f4dbc',
+                    onClick: () => document.getElementById('file-upload-input')?.click()
+                  },
+                  { 
+                    label: 'Использовать шаблон', 
+                    color: '#00afa5',
+                    onClick: () => {/* логика использования шаблона */}
+                  }
                 ].map((action, i) => (
                   <Paper
                     key={i}
                     elevation={0}
+                    onClick={action.onClick}
                     sx={{
                       p: 2,
                       borderRadius: 2,
@@ -292,6 +472,99 @@ export const DashboardPage: React.FC = () => {
           </Paper>
         </Stack>
       </Container>
+
+      {/* Уведомления */}
+      <Notification
+        open={notification.open}
+        type={notification.type}
+        title={notification.title}
+        message={notification.message}
+        progress={notification.progress}
+        onClose={() => setNotification(prev => ({ ...prev, open: false }))}
+      />
+
+      {/* Диалог импорта */}
+      <Dialog 
+        open={importDialogOpen} 
+        onClose={() => !importLoading && setImportDialogOpen(false)}
+        PaperProps={{
+          sx: {
+            borderRadius: 3,
+            background: 'linear-gradient(135deg, #ffffff 0%, #fafbfc 100%)',
+            border: '1px solid rgba(0, 38, 100, 0.1)',
+          }
+        }}
+      >
+        <DialogTitle 
+          sx={{ 
+            fontWeight: 700,
+            color: '#002664',
+            background: 'linear-gradient(135deg, rgba(0, 38, 100, 0.05) 0%, transparent 100%)',
+          }}
+        >
+          Импорт файла
+        </DialogTitle>
+        <DialogContent sx={{ pt: 3 }}>
+          {selectedFile && (
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, p: 2, border: '2px dashed rgba(135, 200, 220, 0.5)', borderRadius: 2 }}>
+              <InsertDriveFileIcon sx={{ color: '#002664' }} />
+              <Box>
+                <Typography variant="body1" sx={{ fontWeight: 600, color: '#002664' }}>
+                  {selectedFile.name}
+                </Typography>
+                <Typography variant="caption" color="text.secondary">
+                  {(selectedFile.size / 1024).toFixed(2)} KB
+                </Typography>
+              </Box>
+            </Box>
+          )}
+          <Typography variant="body2" color="text.secondary" sx={{ mt: 2 }}>
+            Будет создана новая таблица с названием файла. Данные будут доступны для редактирования.
+          </Typography>
+        </DialogContent>
+        <DialogActions sx={{ p: 3, pt: 0 }}>
+          <Button 
+            onClick={() => setImportDialogOpen(false)}
+            disabled={importLoading}
+            sx={{
+              color: '#002664',
+              fontWeight: 600,
+              borderRadius: 2,
+              px: 3,
+            }}
+          >
+            Отмена
+          </Button>
+          <Button 
+            onClick={handleImport}
+            disabled={!selectedFile || importLoading}
+            variant="contained"
+            startIcon={importLoading ? <CloudUploadIcon /> : null}
+            sx={{
+              background: 'linear-gradient(135deg, #002664 0%, #0f4dbc 100%)',
+              borderRadius: 2,
+              px: 3,
+              fontWeight: 600,
+              boxShadow: '0 4px 15px rgba(0, 38, 100, 0.3)',
+              '&:hover': {
+                background: 'linear-gradient(135deg, #0f4dbc 0%, #002664 100%)',
+                boxShadow: '0 6px 20px rgba(0, 38, 100, 0.4)',
+              },
+            }}
+          >
+            {importLoading ? 'Импорт...' : 'Импортировать'}
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Диалог подтверждения обезличивания */}
+      <DataAnonymizationDialog
+        open={anonymizationDialog.open}
+        fileName={anonymizationDialog.fileName}
+        findings={anonymizationDialog.findings}
+        onConfirm={handleAnonymizationConfirm}
+        onCancel={() => setAnonymizationDialog(prev => ({ ...prev, open: false }))}
+      />
     </Box>
   );
 };

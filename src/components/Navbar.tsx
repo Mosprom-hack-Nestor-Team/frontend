@@ -16,11 +16,14 @@ import {
   Menu,
   MenuItem,
   Divider,
+  Badge,
+  Chip,
 } from '@mui/material';
 import MenuIcon from '@mui/icons-material/Menu';
 import PersonIcon from '@mui/icons-material/Person';
 import LogoutIcon from '@mui/icons-material/Logout';
 import TableChartIcon from '@mui/icons-material/TableChart';
+import NotificationsIcon from '@mui/icons-material/Notifications';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { apiService } from '../services/api';
 
@@ -35,13 +38,15 @@ type NavbarProps = {
     role?: string;
   };
   onLogout?: () => void;
+  notificationCount?: number;
 };
 
-export const Navbar: React.FC<NavbarProps> = ({ user, onLogout }) => {
+export const Navbar: React.FC<NavbarProps> = ({ user, onLogout, notificationCount = 3 }) => {
   const navigate = useNavigate();
   const location = useLocation();
   const [drawerOpen, setDrawerOpen] = React.useState(false);
   const [anchorEl, setAnchorEl] = React.useState<null | HTMLElement>(null);
+  const [notificationAnchorEl, setNotificationAnchorEl] = React.useState<null | HTMLElement>(null);
 
   const navItems: NavItem[] = user
     ? [
@@ -62,6 +67,14 @@ export const Navbar: React.FC<NavbarProps> = ({ user, onLogout }) => {
 
   const handleMenuClose = () => {
     setAnchorEl(null);
+  };
+
+  const handleNotificationOpen = (event: React.MouseEvent<HTMLElement>) => {
+    setNotificationAnchorEl(event.currentTarget);
+  };
+
+  const handleNotificationClose = () => {
+    setNotificationAnchorEl(null);
   };
 
   const handleLogout = async () => {
@@ -89,6 +102,31 @@ export const Navbar: React.FC<NavbarProps> = ({ user, onLogout }) => {
       .slice(0, 2);
   };
 
+  // Моковые уведомления для быстрого доступа
+  const quickNotifications = [
+    {
+      id: 1,
+      type: 'edit',
+      message: 'Иван Иванов изменил таблицу "Бюджет 2024"',
+      time: '5 мин назад',
+      read: false,
+    },
+    {
+      id: 2,
+      type: 'share',
+      message: 'Вам предоставили доступ к таблице "Отчет по продажам"',
+      time: '2 часа назад',
+      read: false,
+    },
+    {
+      id: 3,
+      type: 'system',
+      message: 'Системное обновление завершено',
+      time: 'Вчера',
+      read: true,
+    },
+  ];
+
   return (
     <AppBar 
       position="sticky" 
@@ -99,7 +137,7 @@ export const Navbar: React.FC<NavbarProps> = ({ user, onLogout }) => {
       }}
     >
       <Toolbar sx={{ maxWidth: '1400px', mx: 'auto', width: '100%', px: { xs: 2, md: 3 } }}>
-        {/* Логотип Nestor Team */}
+        {/* Логотип AeroDocs */}
         <Box
           sx={{
             display: 'flex',
@@ -147,7 +185,7 @@ export const Navbar: React.FC<NavbarProps> = ({ user, onLogout }) => {
           }}
         >
           <Stack direction="row" spacing={1}>
-            {navItems.map((item, index) => (
+            {navItems.map((item) => (
               <Button
                 key={item.path}
                 onClick={() => handleNavigate(item.path)}
@@ -193,6 +231,127 @@ export const Navbar: React.FC<NavbarProps> = ({ user, onLogout }) => {
         >
           {user ? (
             <>
+              {/* Иконка уведомлений */}
+              <IconButton
+                onClick={handleNotificationOpen}
+                sx={{
+                  color: 'white',
+                  position: 'relative',
+                  '&:hover': {
+                    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+                  },
+                }}
+              >
+                <Badge 
+                  badgeContent={notificationCount} 
+                  color="error"
+                  sx={{
+                    '& .MuiBadge-badge': {
+                      background: 'linear-gradient(135deg, #ff6b6b 0%, #ff8e8e 100%)',
+                      fontWeight: 600,
+                    }
+                  }}
+                >
+                  <NotificationsIcon />
+                </Badge>
+              </IconButton>
+
+              <Menu
+                anchorEl={notificationAnchorEl}
+                open={Boolean(notificationAnchorEl)}
+                onClose={handleNotificationClose}
+                anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
+                transformOrigin={{ vertical: 'top', horizontal: 'right' }}
+                PaperProps={{
+                  sx: { 
+                    mt: 1, 
+                    minWidth: 360,
+                    maxHeight: 400,
+                    borderRadius: 3,
+                    background: 'linear-gradient(135deg, #ffffff 0%, #f8fafc 100%)',
+                    border: '1px solid rgba(135, 200, 220, 0.3)',
+                    boxShadow: '0 8px 32px rgba(0, 38, 100, 0.15)',
+                  },
+                }}
+              >
+                <Box sx={{ p: 2, borderBottom: '1px solid rgba(135, 200, 220, 0.3)' }}>
+                  <Typography variant="h6" sx={{ fontWeight: 700, color: '#002664' }}>
+                    Уведомления
+                  </Typography>
+                  <Typography variant="body2" color="text.secondary">
+                    {notificationCount} новых уведомлений
+                  </Typography>
+                </Box>
+
+                <Box sx={{ maxHeight: 300, overflow: 'auto' }}>
+                  {quickNotifications.map((notification) => (
+                    <MenuItem
+                      key={notification.id}
+                      onClick={() => {
+                        handleNotificationClose();
+                        navigate('/notifications');
+                      }}
+                      sx={{
+                        py: 2,
+                        borderBottom: '1px solid rgba(135, 200, 220, 0.1)',
+                        '&:hover': {
+                          backgroundColor: 'rgba(135, 200, 220, 0.08)',
+                        },
+                        ...(!notification.read && {
+                          backgroundColor: 'rgba(0, 38, 100, 0.04)',
+                        }),
+                      }}
+                    >
+                      <Box sx={{ width: '100%' }}>
+                        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 1 }}>
+                          <Typography variant="body2" sx={{ fontWeight: 600, color: '#002664', flex: 1 }}>
+                            {notification.message}
+                          </Typography>
+                          {!notification.read && (
+                            <Chip
+                              label="Новое"
+                              size="small"
+                              sx={{
+                                background: 'linear-gradient(135deg, #00afa5 0%, #00c9b6 100%)',
+                                color: 'white',
+                                fontWeight: 600,
+                                fontSize: '0.7rem',
+                                height: 20,
+                                ml: 1,
+                              }}
+                            />
+                          )}
+                        </Box>
+                        <Typography variant="caption" color="text.secondary">
+                          {notification.time}
+                        </Typography>
+                      </Box>
+                    </MenuItem>
+                  ))}
+                </Box>
+
+                <Box sx={{ p: 1, borderTop: '1px solid rgba(135, 200, 220, 0.3)' }}>
+                  <Button
+                    fullWidth
+                    onClick={() => {
+                      handleNotificationClose();
+                      navigate('/notifications');
+                    }}
+                    sx={{
+                      color: '#002664',
+                      fontWeight: 600,
+                      borderRadius: 2,
+                      '&:hover': {
+                        backgroundColor: 'rgba(0, 38, 100, 0.08)',
+                      },
+                    }}
+                  >
+                    Все уведомления
+                  </Button>
+                </Box>
+              </Menu>
+
+              {/* Профиль пользователя */}
               <Box
                 onClick={handleMenuOpen}
                 sx={{
@@ -230,6 +389,7 @@ export const Navbar: React.FC<NavbarProps> = ({ user, onLogout }) => {
                   </Typography>
                 </Box>
               </Box>
+
               <Menu
                 anchorEl={anchorEl}
                 open={Boolean(anchorEl)}
@@ -260,6 +420,22 @@ export const Navbar: React.FC<NavbarProps> = ({ user, onLogout }) => {
                   <PersonIcon sx={{ mr: 1.5, fontSize: 20, color: '#002664' }} />
                   <Typography sx={{ color: '#002664', fontWeight: 500 }}>
                     Профиль
+                  </Typography>
+                </MenuItem>
+                <MenuItem
+                  onClick={() => {
+                    handleMenuClose();
+                    navigate('/notifications');
+                  }}
+                  sx={{
+                    '&:hover': {
+                      backgroundColor: 'rgba(135, 200, 220, 0.1)',
+                    }
+                  }}
+                >
+                  <NotificationsIcon sx={{ mr: 1.5, fontSize: 20, color: '#002664' }} />
+                  <Typography sx={{ color: '#002664', fontWeight: 500 }}>
+                    Уведомления
                   </Typography>
                 </MenuItem>
                 <Divider sx={{ my: 1, backgroundColor: 'rgba(135, 200, 220, 0.3)' }} />
@@ -323,7 +499,22 @@ export const Navbar: React.FC<NavbarProps> = ({ user, onLogout }) => {
         </Box>
 
         {/* Mobile menu button */}
-        <Box sx={{ display: { xs: 'flex', md: 'none' }, ml: 'auto' }}>
+        <Box sx={{ display: { xs: 'flex', md: 'none' }, ml: 'auto', gap: 1 }}>
+          {user && (
+            <IconButton
+              onClick={handleNotificationOpen}
+              sx={{
+                color: 'white',
+                '&:hover': {
+                  backgroundColor: 'rgba(255, 255, 255, 0.15)',
+                }
+              }}
+            >
+              <Badge badgeContent={notificationCount} color="error">
+                <NotificationsIcon />
+              </Badge>
+            </IconButton>
+          )}
           <IconButton
             aria-label="open menu"
             onClick={() => setDrawerOpen(true)}
@@ -352,12 +543,12 @@ export const Navbar: React.FC<NavbarProps> = ({ user, onLogout }) => {
             }
           }}
         >
-          <Box sx={{ width: 280, p: 3, height: '100%' }} role="presentation">
+          <Box sx={{ width: 320, p: 3, height: '100%' }} role="presentation">
             {/* Заголовок в Drawer */}
             <Box sx={{ display: 'flex', alignItems: 'center', mb: 4 }}>
               <TableChartIcon sx={{ mr: 2, color: '#87c8dc', fontSize: 32 }} />
               <Typography variant="h6" sx={{ fontWeight: 700, color: 'white' }}>
-                Nestor Team
+                AeroDocs
               </Typography>
             </Box>
 
@@ -421,6 +612,44 @@ export const Navbar: React.FC<NavbarProps> = ({ user, onLogout }) => {
                   </ListItemButton>
                 </ListItem>
               ))}
+              {user && (
+                <ListItem disablePadding sx={{ mb: 1 }}>
+                  <ListItemButton 
+                    onClick={() => handleNavigate('/notifications')}
+                    sx={{
+                      borderRadius: 2,
+                      mb: 1,
+                      backgroundColor: isActive('/notifications') ? 'rgba(135, 200, 220, 0.3)' : 'transparent',
+                      '&:hover': {
+                        backgroundColor: 'rgba(255, 255, 255, 0.1)',
+                      },
+                    }}
+                  >
+                    <ListItemText 
+                      primary={
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                          Уведомления
+                          <Badge 
+                            badgeContent={notificationCount} 
+                            color="error"
+                            sx={{
+                              '& .MuiBadge-badge': {
+                                background: 'linear-gradient(135deg, #ff6b6b 0%, #ff8e8e 100%)',
+                              }
+                            }}
+                          />
+                        </Box>
+                      } 
+                      primaryTypographyProps={{
+                        sx: { 
+                          fontWeight: 600,
+                          color: isActive('/notifications') ? '#87c8dc' : 'white'
+                        }
+                      }}
+                    />
+                  </ListItemButton>
+                </ListItem>
+              )}
             </List>
 
             <Box sx={{ mt: 4 }}>
