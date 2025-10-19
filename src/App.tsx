@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+﻿import React, { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import {
   Box,
@@ -19,7 +19,7 @@ import { LoginPage } from './pages/LoginPage';
 import { RegisterPage } from './pages/RegisterPage';
 import { ProfilePage } from './pages/ProfilePage';
 import { SpreadsheetPage } from './pages/SpreadsheetPage';
-import { DepartmentPage } from './pages/DepartmentPage';
+// import { DepartmentPage } from './pages/DepartmentPage';
 import { apiService, type UserData } from './services/api';
 
 /**
@@ -155,22 +155,14 @@ export const App: React.FC = () => {
                 <Route path="/" element={<HomePage />} />
                 <Route
                   path="/dashboard"
-                  element={
-                    <DashboardPage
-                      tables={tables}
-                      onCreateTable={handleTableCreate}
-                      onEditTable={handleTableEdit}
-                      onDeleteTable={handleTableDelete}
-                      onOpenTable={handleTableOpen}
-                    />
-                  }
+                  element={<DashboardPage />}
                 />
                 <Route path="/about" element={<AboutPage />} />
                 <Route path="/login" element={<LoginPage />} />
                 <Route path="/register" element={<RegisterPage />} />
                 <Route path="/profile" element={<ProfilePage />} />
                 <Route path="/spreadsheet/:id" element={<SpreadsheetPage />} />
-                <Route path="/department" element={<DepartmentPage />} />
+                {/* <Route path="/department" element={<DepartmentPage />} /> */}
                 {/* Пример маршрута таблицы (если требуется) */}
                 <Route
                   path="/table/:id"
