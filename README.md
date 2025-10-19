@@ -1,4 +1,4 @@
-# Database Management System
+# AeroDocs
 
 React + TypeScript веб-приложение для управления табличными данными
 
@@ -13,6 +13,7 @@ npm run dev
 
 # Приложение откроется по адресу: http://localhost:5173
 ```
+
 ## Другие команды
 
 ```bash
@@ -35,23 +36,48 @@ frontend/
 │   └── ...
 ├── src/
 │   ├── components/         # React компоненты
-│   │   ├── Header.tsx     # Верхняя панель навигации
-│   │   ├── Dashboard.tsx  # Главная страница с таблицами
-│   │   ├── DataTable.tsx  # Компонент таблицы с CRUD
-│   │   ├── TableCard.tsx  # Карточка таблицы для Dashboard
-│   │   ├── Grid.tsx       # Кастомный Grid компонент
-│   │   └── AeroLinesBackground.tsx # Фоновые элементы
-│   ├── App.tsx            # Корневой компонент приложения
-│   ├── main.tsx           # Точка входа
-│   ├── theme.ts           # Тема Material-UI
-│   └── index.css          # Глобальные стили
-├── index.html             # HTML шаблон
-├── package.json           # Зависимости и скрипты
-├── tsconfig.json          # Конфигурация TypeScript
-├── tsconfig.app.json      # TS конфиг для приложения
-├── tsconfig.node.json     # TS конфиг для Node
-└── vite.config.ts         # Конфигурация Vite
+│   │   ├── AeroLinesBackground.tsx  # Фоновые аэродинамические линии
+│   │   ├── Dashboard.tsx            # Главная страница с таблицами
+│   │   ├── DataTable.tsx            # Базовый редактор таблиц с CRUD
+│   │   ├── Footer.tsx               # Нижний колонтитул
+│   │   ├── Grid.tsx                 # Кастомный Grid компонент
+│   │   ├── Header.tsx               # Верхняя панель (устаревшая)
+│   │   ├── Navbar.tsx               # Основная навигационная панель
+│   │   ├── Notification.tsx         # Компонент уведомлений
+│   │   ├── SpreadsheetEditor.tsx    # Продвинутый редактор таблиц
+│   │   ├── SpreadsheetList.tsx      # Список таблиц
+│   │   └── TableCard.tsx            # Карточка таблицы для Dashboard
+│   ├── pages/              # Страницы приложения
+│   │   ├── AboutPage.tsx            # Страница "О нас"
+│   │   ├── DashboardPage.tsx        # Панель управления
+│   │   ├── DepartmentPage.tsx       # Страница отдела (мониторинг задач)
+│   │   ├── HomePage.tsx             # Домашняя страница
+│   │   ├── LoginPage.tsx            # Страница входа
+│   │   ├── NotificationsPage.tsx    # Страница уведомлений
+│   │   ├── ProfilePage.tsx          # Профиль пользователя
+│   │   ├── RegisterPage.tsx         # Страница регистрации
+│   │   └── SpreadsheetPage.tsx      # Страница таблицы
+│   ├── services/           # API сервисы и утилиты
+│   │   └── api.ts                   # Сервис для работы с API
+│   ├── theme.ts                      # Тема Material-UI
+│   ├── App.tsx                      # Корневой компонент приложения
+│   ├── main.tsx                     # Точка входа
+│   └── index.css                    # Глобальные стили
+├── конфигурационные файлы
+│   ├── .env.development             # Переменные для разработки
+│   ├── .env.production              # Переменные для production
+│   ├── .gitignore                   # Игнорируемые файлы Git
+│   ├── eslint.config.js             # Конфигурация ESLint
+│   ├── index.html                   # HTML шаблон
+│   ├── package-lock.json            # Лок файл зависимостей
+│   ├── package.json                 # Зависимости и скрипты
+│   ├── tsconfig.app.json            # TS конфиг для приложения
+│   ├── tsconfig.json                # Основной TS конфиг
+│   ├── tsconfig.node.json           # TS конфиг для Node
+│   └── vite.config.ts               # Конфигурация Vite
+└── README.md                        # Документация
 ```
+
 ##  🛠 Технологии
 - React 18 + TypeScript
 - Material-UI для интерфейса
@@ -92,3 +118,25 @@ frontend/
 ### 👤 Система пользователей
 - Интерфейс для разных ролей (Admin, Creator, User)
 - Информация о текущем пользователе
+
+## 🔄 Основные workflow
+
+### Аутентификация
+```bash
+LoginPage → api.ts (login) → Navbar (обновление состояния)
+```
+
+### Работа с таблицами
+```bash
+DashboardPage → SpreadsheetList → SpreadsheetPage → SpreadsheetEditor
+```
+
+### Совместное редактирование
+```bash
+SpreadsheetEditor → WebSocket → Real-time обновления
+```
+
+### Мониторинг активности
+```bash
+DepartmentPage → Отслеживание задач сотрудников
+```
