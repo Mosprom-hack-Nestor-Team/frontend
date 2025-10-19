@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+﻿import React, { useState, useEffect, useRef } from 'react';
 import {
     Box,
     Paper,
@@ -46,8 +46,12 @@ export const SpreadsheetEditor: React.FC<SpreadsheetEditorProps> = ({
     // Keep current editing value in a ref to avoid re-rendering on each keystroke
     const editValueRef = useRef<string>('');
     const [activeUsers, setActiveUsers] = useState<ActiveUser[]>([]);
-    const [ws, setWs] = useState<WebSocket | null>(null);
+    const wsRef = useRef<WebSocket | null>(null);
+    const reconnectTimerRef = useRef<any>(null);
     const inputRef = useRef<HTMLInputElement>(null);
+    const [aiSuggestions, setAiSuggestions] = useState<any[]>([]);
+    const [autoFillCount, setAutoFillCount] = useState<number>(5);
+    const [aiLoading, setAiLoading] = useState(false);
 
     const canEdit = spreadsheet.my_permission === 'owner' || spreadsheet.my_permission === 'edit';
 
@@ -58,42 +62,72 @@ export const SpreadsheetEditor: React.FC<SpreadsheetEditorProps> = ({
         }
     }, [spreadsheet.id]);
 
-    // WebSocket connection
+    // WebSocket connection with auto-reconnect and ping
     useEffect(() => {
         if (!canEdit) return;
 
-        const wsUrl = apiService.getWebSocketUrl(spreadsheet.id);
-        const websocket = new WebSocket(wsUrl);
+        let stopped = false;
 
-        websocket.onopen = () => {
-            console.log('WebSocket connected');
-        };
+        const connect = () => {
+            if (stopped) return;
+            try {
+                const current = wsRef.current;
+                if (current && (current.readyState === WebSocket.OPEN || current.readyState === WebSocket.CONNECTING)) {
+                    return;
+                }
+                const wsUrl = apiService.getWebSocketUrl(spreadsheet.id);
+                const socket = new WebSocket(wsUrl);
+                wsRef.current = socket;
 
-        websocket.onmessage = (event) => {
-            const message = JSON.parse(event.data);
-            handleWebSocketMessage(message);
-        };
+                socket.onopen = () => {
+                    console.log('WebSocket connected');
+                };
 
-        websocket.onerror = (error) => {
-            console.error('WebSocket error:', error);
-        };
+                socket.onmessage = (event) => {
+                    try {
+                        const message = JSON.parse(event.data);
+                        handleWebSocketMessage(message);
+                    } catch (e) {
+                        console.warn('WS parse error', e);
+                    }
+                };
 
-        websocket.onclose = () => {
-            console.log('WebSocket disconnected');
-        };
+                socket.onerror = (error) => {
+                    console.error('WebSocket error:', error);
+                };
 
-        setWs(websocket);
-
-        // Ping every 30 seconds to keep connection alive
-        const pingInterval = setInterval(() => {
-            if (websocket.readyState === WebSocket.OPEN) {
-                websocket.send(JSON.stringify({ type: 'ping' }));
+                socket.onclose = () => {
+                    console.log('WebSocket disconnected');
+                    if (!stopped) {
+                        reconnectTimerRef.current = setTimeout(connect, 1000);
+                    }
+                };
+            } catch (e) {
+                console.error('WebSocket connect failed', e);
+                reconnectTimerRef.current = setTimeout(connect, 1000);
             }
-        }, 30000);
+        };
+
+        connect();
+
+        const pingInterval = setInterval(() => {
+            const ws = wsRef.current;
+            if (ws && ws.readyState === WebSocket.OPEN) {
+                ws.send(JSON.stringify({ type: 'ping' }));
+            }
+        }, 25000);
 
         return () => {
+            stopped = true;
             clearInterval(pingInterval);
-            websocket.close();
+            if (reconnectTimerRef.current) {
+                clearTimeout(reconnectTimerRef.current);
+                reconnectTimerRef.current = null;
+            }
+            if (wsRef.current) {
+                try { wsRef.current.close(); } catch {}
+                wsRef.current = null;
+            }
         };
     }, [spreadsheet.id, canEdit]);
 
@@ -134,6 +168,146 @@ export const SpreadsheetEditor: React.FC<SpreadsheetEditorProps> = ({
                 break;
         }
     };
+
+    // -------- AI suggestions (lightweight, on-device) --------
+    const getColumnValues = (col: number): any[] => {
+        const vals: any[] = [];
+        for (let r = 0; r < spreadsheet.rows; r++) {
+            const v = getCellValue(r, col);
+            if (v !== undefined && v !== null && v !== '') vals.push({ r, v });
+        }
+        return vals;
+    };
+
+    const computeNumericSuggestion = (col: number, targetRow: number): number | null => {
+        const data = getColumnValues(col)
+            .filter(({ v }) => typeof v === 'number' && isFinite(v))
+            .map(({ r, v }) => ({ x: r, y: Number(v) }))
+            .sort((a, b) => a.x - b.x);
+        if (data.length < 2) return null;
+        const n = data.length;
+        let sumX = 0, sumY = 0, sumXY = 0, sumXX = 0;
+        for (const { x, y } of data) {
+            sumX += x; sumY += y; sumXY += x * y; sumXX += x * x;
+        }
+        const denom = (n * sumXX - sumX * sumX);
+        if (denom === 0) return null;
+        const a = (n * sumXY - sumX * sumY) / denom; // slope
+        const b = (sumY - a * sumX) / n; // intercept
+        const pred = a * targetRow + b;
+        if (!isFinite(pred)) return null;
+        return Math.round((pred + Number.EPSILON) * 1000) / 1000;
+    };
+
+    const computeDateSuggestion = (col: number, targetRow: number): string | null => {
+        const data = getColumnValues(col)
+            .map(({ r, v }) => ({ r, d: new Date(v) }))
+            .filter(({ d }) => !isNaN(d.getTime()))
+            .sort((a, b) => a.r - b.r);
+        if (data.length < 2) return null;
+        const deltas: number[] = [];
+        for (let i = 1; i < data.length; i++) {
+            deltas.push((data[i].d.getTime() - data[i - 1].d.getTime()) / (24 * 3600 * 1000));
+        }
+        const avg = deltas.reduce((s, v) => s + v, 0) / deltas.length;
+        const last = data[data.length - 1];
+        const steps = Math.max(1, targetRow - last.r);
+        const next = new Date(last.d.getTime() + steps * avg * 24 * 3600 * 1000);
+        const iso = next.toISOString().slice(0, 10);
+        return iso;
+    };
+
+    const computeTextSuggestions = (col: number, prefix?: string): string[] => {
+        const data = getColumnValues(col)
+            .map(({ v }) => String(v))
+            .filter((s) => s.length > 0);
+        if (data.length === 0) return [];
+        const freq = new Map<string, number>();
+        for (const s of data) {
+            if (prefix && !s.toLowerCase().startsWith(prefix.toLowerCase())) continue;
+            freq.set(s, (freq.get(s) || 0) + 1);
+        }
+        const top = Array.from(freq.entries())
+            .sort((a, b) => b[1] - a[1])
+            .slice(0, 5)
+            .map(([s]) => s);
+
+        // Pattern like "Item 1" -> suggest next "Item N+1"
+        const pattern = data.find((s) => /\d+$/.test(s));
+        if (pattern) {
+            const m = pattern.match(/^(.*?)(\d+)$/);
+            if (m) {
+                const base = m[1];
+                const num = parseInt(m[2] || '0', 10);
+                const candidate = `${base}${num + 1}`.trim();
+                if (!top.includes(candidate)) top.unshift(candidate);
+            }
+        }
+        return top;
+    };
+
+    const suggestForCell = async () => {
+        if (!selectedCell || !canEdit) return;
+        const { row, col } = selectedCell;
+        setAiLoading(true);
+        try {
+            const val = getCellValue(row, col);
+            const sugg: any[] = [];
+            // Numeric suggestion
+            const num = computeNumericSuggestion(col, row);
+            if (num !== null) sugg.push(num);
+            // Date suggestion
+            const date = computeDateSuggestion(col, row);
+            if (date) sugg.push(date);
+            // Text suggestions
+            const textS = computeTextSuggestions(col);
+            sugg.push(...textS);
+            setAiSuggestions(Array.from(new Set(sugg)).slice(0, 6));
+        } finally {
+            setAiLoading(false);
+        }
+    };
+
+    const applySuggestion = async (s: any) => {
+        if (!selectedCell) return;
+        await saveCellToServer(selectedCell.row, selectedCell.col, s);
+        setAiSuggestions([]);
+    };
+
+    const autoFillDown = async () => {
+        if (!selectedCell || !canEdit) return;
+        const { row, col } = selectedCell;
+        const baseVal = getCellValue(row, col);
+        const count = Math.max(1, Math.min(autoFillCount || 1, Math.max(0, spreadsheet.rows - row - 1)));
+        for (let k = 1; k <= count; k++) {
+            const targetRow = row + k;
+            let val: any = null;
+            if (typeof baseVal === 'number') {
+                val = computeNumericSuggestion(col, targetRow);
+            }
+            if (!val) {
+                const dateS = computeDateSuggestion(col, targetRow);
+                if (dateS) val = dateS;
+            }
+            if (!val) {
+                const txt = String(baseVal ?? '').trim();
+                if (txt.length > 0) {
+                    const m = txt.match(/^(.*?)(\d+)$/);
+                    if (m) {
+                        const base = m[1];
+                        const num = parseInt(m[2], 10) + k;
+                        val = `${base}`.trim();
+                    } else {
+                        const opts = computeTextSuggestions(col, txt);
+                        val = opts[0] || txt;
+                    }
+                }
+            }
+            if (val === null || val === undefined) val = baseVal;
+            await saveCellToServer(targetRow, col, val);
+        }
+    };
+
 
     const getCellRef = (row: number, col: number): string => {
         return `${row}_${col}`;
@@ -316,6 +490,7 @@ export const SpreadsheetEditor: React.FC<SpreadsheetEditorProps> = ({
 
             await apiService.updateCell(spreadsheet.id, cellUpdate);
 
+            const ws = wsRef.current;
             if (ws && ws.readyState === WebSocket.OPEN) {
                 ws.send(
                     JSON.stringify({
@@ -490,7 +665,32 @@ export const SpreadsheetEditor: React.FC<SpreadsheetEditorProps> = ({
                             </Typography>
                         )}
                     </Box>
+
+                <Stack direction="row" alignItems="center" spacing={2} sx={{ mt: 2, flexWrap: 'wrap' }}>
+                    <Typography variant="body2" color="text.secondary">AI помощник:</Typography>
+                    <Box>
+                        <button onClick={suggestForCell} disabled={!canEdit || !selectedCell || aiLoading} style={{ padding: '6px 10px', borderRadius: 6, border: '1px solid #e0e0e0', cursor: (!canEdit || !selectedCell) ? 'not-allowed' : 'pointer', background: 'white' }}>
+                            {aiLoading ? 'Думаю…' : '✨ Подсказать'}
+                        </button>
+                    </Box>
+                    <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
+                        {aiSuggestions.map((s, idx) => (
+                            <span key={idx}
+                                  onClick={() => applySuggestion(s)}
+                                  style={{ padding: '4px 8px', borderRadius: 12, border: '1px solid #e0e0e0', background: '#fafafa', cursor: 'pointer' }}>
+                                {String(s)}
+                            </span>
+                        ))}
+                    </Box>
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                        <Typography variant="body2" color="text.secondary">Авто-fill вниз:</Typography>
+                        <input type="number" min="1" value={autoFillCount} onChange={(e) => setAutoFillCount(Math.max(1, parseInt(e.target.value || '1')))} style={{ width: 70, padding: '4px 6px', border: '1px solid #e0e0e0', borderRadius: 6 }} />
+                        <button onClick={autoFillDown} disabled={!canEdit || !selectedCell} style={{ padding: '6px 10px', borderRadius: 6, border: '1px solid #e0e0e0', cursor: (!canEdit || !selectedCell) ? 'not-allowed' : 'pointer', background: 'white' }}>
+                            Заполнить
+                        </button>
+                    </Box>
                 </Stack>
+            </Stack>  
             </Paper>
 
             {/* Grid */}

@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   Container,
   Box,
@@ -15,6 +15,7 @@ import DashboardIcon from '@mui/icons-material/Dashboard';
 export const DashboardPage: React.FC = () => {
   const navigate = useNavigate();
   const theme = useTheme();
+  const [stats, setStats] = useState<any | null>(null);
 
   useEffect(() => {
     // Check if user is authenticated
@@ -22,6 +23,9 @@ export const DashboardPage: React.FC = () => {
       navigate('/login');
       return;
     }
+    // Log visit and load stats
+    apiService.logVisit('dashboard').catch(() => {});
+    apiService.getStatsSummary(7).then(setStats).catch(() => {});
   }, [navigate]);
 
   return (
@@ -148,6 +152,34 @@ export const DashboardPage: React.FC = () => {
               </Box>
             </Stack>
           </Paper>
+
+          {/* Real Stats (summary) */}
+          {stats && (
+            <Paper
+              elevation={0}
+              sx={{
+                p: { xs: 2, md: 3 },
+                borderRadius: 3,
+                background: 'linear-gradient(135deg, #ffffff 0%, #fafbfc 100%)',
+                border: '1px solid rgba(0, 38, 100, 0.1)',
+              }}
+            >
+              <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap' }}>
+                <Box sx={{ p: 2, border: '1px solid #e0e0e0', borderRadius: 2, minWidth: 180 }}>
+                  <Typography variant="caption" color="text.secondary">Мои таблицы</Typography>
+                  <Typography variant="h6">{stats.owned}</Typography>
+                </Box>
+                <Box sx={{ p: 2, border: '1px solid #e0e0e0', borderRadius: 2, minWidth: 180 }}>
+                  <Typography variant="caption" color="text.secondary">Доступные (всего)</Typography>
+                  <Typography variant="h6">{stats.total}</Typography>
+                </Box>
+                <Box sx={{ p: 2, border: '1px solid #e0e0e0', borderRadius: 2, minWidth: 220 }}>
+                  <Typography variant="caption" color="text.secondary">Открытий за {stats.visits.days} дн.</Typography>
+                  <Typography variant="h6">{stats.visits.opens_last_days}</Typography>
+                </Box>
+              </Box>
+            </Paper>
+          )}
 
           {/* Spreadsheet List Section */}
           <Paper 

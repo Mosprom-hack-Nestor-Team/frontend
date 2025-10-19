@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+﻿import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import {
     Container,
@@ -33,6 +33,7 @@ import {
 } from '@mui/icons-material';
 import { apiService, type SpreadsheetDetail, type ShareSpreadsheet } from '../services/api';
 import { SpreadsheetEditor } from '../components/SpreadsheetEditor';
+import HistoryIcon from '@mui/icons-material/History';
 
 export const SpreadsheetPage: React.FC = () => {
     const { id } = useParams<{ id: string }>();
@@ -43,6 +44,10 @@ export const SpreadsheetPage: React.FC = () => {
     const [shareDialogOpen, setShareDialogOpen] = useState(false);
     const [shareEmail, setShareEmail] = useState('');
     const [sharePermission, setSharePermission] = useState<'edit' | 'view'>('view');
+    const [historyOpen, setHistoryOpen] = useState(false);
+    const [historyItems, setHistoryItems] = useState<any[]>([]);
+    const [historyLoading, setHistoryLoading] = useState(false);
+    const [historyDays, setHistoryDays] = useState(30);
 
     useEffect(() => {
         if (!apiService.isAuthenticated()) {
@@ -52,6 +57,12 @@ export const SpreadsheetPage: React.FC = () => {
 
         loadSpreadsheet();
     }, [id, navigate]);
+
+    useEffect(() => {
+        if (id && apiService.isAuthenticated()) {
+            apiService.logVisit('spreadsheet_open', id).catch(() => {});
+        }
+    }, [id]);
 
     const loadSpreadsheet = async () => {
         if (!id) return;
@@ -301,6 +312,26 @@ export const SpreadsheetPage: React.FC = () => {
                                 Поделиться
                             </Button>
                         )}
+                        <Button
+                            variant="outlined"
+                            startIcon={<HistoryIcon />}
+                            onClick={async () => {
+                                if (!id) return;
+                                setHistoryOpen(true);
+                                setHistoryLoading(true);
+                                try {
+                                    const data = await apiService.getSpreadsheetHistory(id, historyDays, 200);
+                                    setHistoryItems(data.changes);
+                                } catch (e) {
+                                    console.error(e);
+                                } finally {
+                                    setHistoryLoading(false);
+                                }
+                            }}
+                            sx={{ ml: 2 }}
+                        >
+                            История версий
+                        </Button>
                     </Box>
                 </Paper>
 
@@ -378,6 +409,64 @@ export const SpreadsheetPage: React.FC = () => {
                         </List>
                     </Paper>
                 )}
+
+                {/* History Dialog */}
+                <Dialog open={historyOpen} onClose={() => setHistoryOpen(false)} maxWidth="md" fullWidth>
+                    <DialogTitle>
+                        История версий
+                    </DialogTitle>
+                    <DialogContent>
+                        <Box display="flex" alignItems="center" gap={2} mb={2}>
+                            <TextField
+                                label="Дней"
+                                type="number"
+                                value={historyDays}
+                                onChange={(e) => setHistoryDays(Math.max(1, parseInt(e.target.value || '1')))}
+                                size="small"
+                                sx={{ width: 120 }}
+                            />
+                            <Button
+                                onClick={async () => {
+                                    if (!id) return;
+                                    setHistoryLoading(true);
+                                    try {
+                                        const data = await apiService.getSpreadsheetHistory(id, historyDays, 200);
+                                        setHistoryItems(data.changes);
+                                    } finally {
+                                        setHistoryLoading(false);
+                                    }
+                                }}
+                                variant="outlined"
+                            >
+                                Обновить
+                            </Button>
+                        </Box>
+                        {historyLoading ? (
+                            <Box display="flex" justifyContent="center" py={4}>
+                                <CircularProgress />
+                            </Box>
+                        ) : (
+                            <List>
+                                {historyItems.length === 0 ? (
+                                    <Typography color="text.secondary">Нет изменений за выбранный период</Typography>
+                                ) : (
+                                    historyItems.map((h, idx) => (
+                                        <ListItem key={idx} divider>
+                                            <ListItemText
+                                                primary={`${new Date(h.timestamp).toLocaleString()} — ${h.user_email} — ${h.change_type}`}
+                                                secondary={h.cell_ref ? `Ячейка ${h.cell_ref}; Было: ${String(h.old_value ?? '')}; Стало: ${String(h.new_value ?? '')}` : undefined}
+                                            />
+                                            <Chip label={`v${h.version}`} size="small" />
+                                        </ListItem>
+                                    ))
+                                )}
+                            </List>
+                        )}
+                    </DialogContent>
+                    <DialogActions>
+                        <Button onClick={() => setHistoryOpen(false)}>Закрыть</Button>
+                    </DialogActions>
+                </Dialog>
 
                 {/* Share Dialog */}
                 <Dialog 
