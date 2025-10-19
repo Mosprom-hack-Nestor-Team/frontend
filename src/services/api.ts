@@ -71,6 +71,7 @@ export interface SpreadsheetInfo {
     updated_at: string;
     version: number;
     my_permission: 'owner' | 'edit' | 'view';
+    last_modified_email?: string | null;
 }
 
 export interface SpreadsheetDetail extends SpreadsheetInfo {
