@@ -71,6 +71,7 @@ export interface SpreadsheetInfo {
     updated_at: string;
     version: number;
     my_permission: 'owner' | 'edit' | 'view';
+    last_modified_email?: string | null;
 }
 
 export interface SpreadsheetDetail extends SpreadsheetInfo {
@@ -374,6 +375,69 @@ class ApiService {
         const token = localStorage.getItem('access_token');
         const wsBaseUrl = API_BASE_URL.replace('http', 'ws');
         return `${wsBaseUrl}/ws/spreadsheets/${spreadsheetId}?token=${token}`;
+    }
+
+    // Prototype: import spreadsheet by filename only (server creates empty file)
+    async importSpreadsheetExcel(file: File): Promise<SpreadsheetInfo> {
+        const form = new FormData();
+        form.append('file', file);
+        const token = localStorage.getItem('access_token');
+        const response = await fetch(`${API_BASE_URL}/spreadsheets/import`, {
+            method: 'POST',
+            headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+            body: form,
+        });
+        if (!response.ok) {
+            try {
+                const err = await response.json();
+                throw new Error(err?.detail || 'Failed to import spreadsheet');
+            } catch {
+                throw new Error('Failed to import spreadsheet');
+            }
+        }
+        return await response.json();
+    }
+
+    // Prototype: export empty xlsx for selected spreadsheet
+    async exportSpreadsheetExcel(id: string): Promise<Blob> {
+        const token = localStorage.getItem('access_token');
+        const response = await fetch(`${API_BASE_URL}/spreadsheets/${id}/export`, {
+            method: 'GET',
+            headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+        });
+        if (!response.ok) {
+            throw new Error('Failed to export spreadsheet');
+        }
+        return await response.blob();
+    }
+
+    // Stats: log a visit event
+    async logVisit(event: 'dashboard' | 'spreadsheet_open', spreadsheetId?: string): Promise<void> {
+        const token = localStorage.getItem('access_token');
+        await fetch(`${API_BASE_URL}/stats/visit?event=${encodeURIComponent(event)}${spreadsheetId ? `&spreadsheet_id=${encodeURIComponent(spreadsheetId)}` : ''}`, {
+            method: 'POST',
+            headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+        });
+    }
+
+    // Stats: summary for dashboard
+    async getStatsSummary(days = 7): Promise<any> {
+        const response = await fetch(`${API_BASE_URL}/stats/summary?days=${days}`, {
+            method: 'GET',
+            headers: this.getAuthHeader(),
+        });
+        if (!response.ok) throw new Error('Failed to load stats');
+        return await response.json();
+    }
+
+    // History: spreadsheet changes
+    async getSpreadsheetHistory(id: string, days = 30, limit = 100): Promise<{ changes: any[]; total: number }>{
+        const response = await fetch(`${API_BASE_URL}/stats/spreadsheets/${id}/history?days=${days}&limit=${limit}`, {
+            method: 'GET',
+            headers: this.getAuthHeader(),
+        });
+        if (!response.ok) throw new Error('Failed to load history');
+        return await response.json();
     }
 
     /**

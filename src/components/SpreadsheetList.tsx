@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+﻿import React, { useState, useEffect } from 'react';
 import {
     Box,
     Card,
@@ -15,17 +15,20 @@ import {
     Menu,
     MenuItem,
     CircularProgress,
+    Paper,
+    Stack,
 } from '@mui/material';
 import {
     Add as AddIcon,
     Delete as DeleteIcon,
     Edit as EditIcon,
     MoreVert as MoreVertIcon,
-} from '@mui/icons-material';
+    } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
 import { apiService, type SpreadsheetInfo, type SpreadsheetCreate } from '../services/api';
-import UploadFileIcon from '@mui/icons-material/UploadFile';
-import DownloadIcon from '@mui/icons-material/Download';
+
+import CloudUploadIcon from '@mui/icons-material/CloudUpload';
+import FileDownloadIcon from '@mui/icons-material/FileDownload';
 
 export const SpreadsheetList: React.FC = () => {
     const navigate = useNavigate();
@@ -95,10 +98,19 @@ export const SpreadsheetList: React.FC = () => {
     };
 
     const getPermissionChip = (permission: string) => {
-        const colors: Record<string, 'default' | 'primary' | 'secondary' | 'success'> = {
-            owner: 'primary',
-            edit: 'success',
-            view: 'default',
+        const colors: Record<string, any> = {
+            owner: {
+                background: 'linear-gradient(135deg, #002664 0%, #0f4dbc 100%)',
+                color: 'white'
+            },
+            edit: {
+                background: 'linear-gradient(135deg, #00afa5 0%, #00c9b6 100%)',
+                color: 'white'
+            },
+            view: {
+                background: 'linear-gradient(135deg, #87c8dc 0%, #a8d8ea 100%)',
+                color: '#002664'
+            },
         };
 
         const labels: Record<string, string> = {
@@ -107,11 +119,25 @@ export const SpreadsheetList: React.FC = () => {
             view: 'Просмотр',
         };
 
+        const style = colors[permission] || {
+            background: 'linear-gradient(135deg, #e0e0e0 0%, #f5f5f5 100%)',
+            color: '#666666'
+        };
+
         return (
             <Chip
                 label={labels[permission] || permission}
-                color={colors[permission] || 'default'}
                 size="small"
+                sx={{
+                    background: style.background,
+                    color: style.color,
+                    fontWeight: 600,
+                    fontSize: '0.75rem',
+                    height: 24,
+                    '& .MuiChip-label': {
+                        px: 1,
+                    }
+                }}
             />
         );
     };
@@ -127,92 +153,117 @@ export const SpreadsheetList: React.FC = () => {
 
     if (loading) {
         return (
-            <Box display="flex" justifyContent="center" alignItems="center" minHeight="400px">
-                <CircularProgress />
+            <Box display="flex" justifyContent="center" alignItems="center" minHeight="200px">
+                <CircularProgress 
+                    sx={{ 
+                        color: '#002664',
+                        width: 40,
+                        height: 40 
+                    }} 
+                />
             </Box>
         );
     }
 
     return (
-        <Box>
-            <Box display="flex" justifyContent="flex-end" alignItems="center" mb={2} gap={1}>
-                <input
-                    id="excel-file-input"
-                    type="file"
-                    accept=".xlsx"
-                    style={{ display: 'none' }}
-                    onChange={async (e) => {
-                        const file = e.target.files?.[0];
-                        if (!file) return;
-                        try {
-                            const res = await apiService.importExcel(file);
-                            alert(`Импорт успешно выполнен. Загружено записей: ${res.inserted}`);
-                        } catch (err: any) {
-                            alert(err?.message || 'Не удалось импортировать файл');
-                        } finally {
-                            e.currentTarget.value = '';
-                        }
-                    }}
-                />
-                <label htmlFor="excel-file-input">
-                    <Button variant="outlined" component="span" startIcon={<UploadFileIcon />}>
-                        Импорт Excel
-                    </Button>
-                </label>
-                <Button
-                    variant="outlined"
-                    color="inherit"
-                    startIcon={<DownloadIcon />}
-                    onClick={async () => {
-                        try {
-                            const blob = await apiService.exportExcel();
-                            const url = URL.createObjectURL(blob);
-                            const a = document.createElement('a');
-                            a.href = url;
-                            a.download = 'export.xlsx';
-                            document.body.appendChild(a);
-                            a.click();
-                            a.remove();
-                            URL.revokeObjectURL(url);
-                        } catch (err: any) {
-                            alert(err?.message || 'Не удалось экспортировать данные');
-                        }
+        <Box>            
+            <Box display="flex" justifyContent="space-between" alignItems="center" mb={4}>
+                <Typography 
+                    variant="h4" 
+                    sx={{
+                        fontWeight: 700,
+                        color: '#002664',
                     }}
                 >
-                    Экспорт Excel
-                </Button>
-            </Box>
-            <Box display="flex" justifyContent="space-between" alignItems="center" mb={3}>
-                <Typography variant="h4" component="h1">
                     Мои таблицы
                 </Typography>
-                <Button
-                    variant="contained"
-                    color="primary"
-                    startIcon={<AddIcon />}
-                    onClick={() => setCreateDialogOpen(true)}
-                >
-                    Создать таблицу
-                </Button>
-            </Box>
-
-            {spreadsheets.length === 0 ? (
-                <Box textAlign="center" py={8}>
-                    <Typography variant="h6" color="textSecondary" gutterBottom>
-                        У вас пока нет таблиц
-                    </Typography>
-                    <Typography variant="body2" color="textSecondary" mb={3}>
-                        Создайте свою первую таблицу для начала работы
-                    </Typography>
+                                <Box sx={{ display: 'flex', gap: 1 }}>
+                    <input
+                        id="excel-import-input"
+                        type="file"
+                        accept=".xlsx"
+                        style={{ display: 'none' }}
+                        onChange={async (e) => {
+                            const file = (e.target as HTMLInputElement).files?.[0];
+                            if (!file) return;
+                            try {
+                                const created = await apiService.importSpreadsheetExcel(file);
+                                setSpreadsheets((prev) => [created, ...prev]);
+                            } catch (err) {
+                                alert((err as any)?.message || 'Не удалось импортировать Excel');
+                            } finally {
+                                (e.target as HTMLInputElement).value = '';
+                            }
+                        }}
+                    />
+                    <label htmlFor="excel-import-input">
+                        <Button variant="outlined" component="span" startIcon={<CloudUploadIcon />}>Импорт Excel</Button>
+                    </label>
                     <Button
                         variant="contained"
-                        color="primary"
                         startIcon={<AddIcon />}
                         onClick={() => setCreateDialogOpen(true)}
                     >
                         Создать таблицу
                     </Button>
                 </Box>
+            </Box>
+
+            {spreadsheets.length === 0 ? (
+                <Paper 
+                    elevation={0}
+                    sx={{ 
+                        p: 6, 
+                        borderRadius: 3,
+                        background: 'linear-gradient(135deg, rgba(135, 200, 220, 0.1) 0%, rgba(15, 77, 188, 0.05) 100%)',
+                        border: '2px dashed rgba(135, 200, 220, 0.5)',
+                        textAlign: 'center',
+                    }}
+                >
+                    <Stack spacing={3} alignItems="center">
+                        <Typography 
+                            variant="h5" 
+                            sx={{
+                                fontWeight: 600,
+                                color: '#002664',
+                            }}
+                        >
+                            У вас пока нет таблиц
+                        </Typography>
+                        <Typography 
+                            variant="body1" 
+                            color="text.secondary"
+                            sx={{ 
+                                maxWidth: 400,
+                                lineHeight: 1.6,
+                            }}
+                        >
+                            Создайте свою первую таблицу для начала работы
+                        </Typography>
+                        <Button
+                            variant="contained"
+                            startIcon={<AddIcon />}
+                            onClick={() => setCreateDialogOpen(true)}
+                            sx={{
+                                background: 'linear-gradient(135deg, #002664 0%, #0f4dbc 100%)',
+                                borderRadius: 2,
+                                px: 4,
+                                py: 1.5,
+                                fontSize: '1rem',
+                                fontWeight: 600,
+                                boxShadow: '0 4px 15px rgba(0, 38, 100, 0.3)',
+                                '&:hover': {
+                                    background: 'linear-gradient(135deg, #0f4dbc 0%, #002664 100%)',
+                                    boxShadow: '0 6px 20px rgba(0, 38, 100, 0.4)',
+                                    transform: 'translateY(-2px)',
+                                },
+                                transition: 'all 0.3s ease-in-out',
+                            }}
+                        >
+                            Создать таблицу
+                        </Button>
+                    </Stack>
+                </Paper>
             ) : (
                 <Box
                     sx={{
@@ -226,24 +277,41 @@ export const SpreadsheetList: React.FC = () => {
                     }}
                 >
                     {spreadsheets.map((spreadsheet) => (
-                        <Card
+                        <Paper
                             key={spreadsheet.id}
+                            elevation={0}
                             sx={{
+                                p: 3,
+                                borderRadius: 3,
+                                background: 'linear-gradient(135deg, #ffffff 0%, #fafbfc 100%)',
+                                border: '2px solid',
+                                borderColor: 'rgba(135, 200, 220, 0.3)',
+                                cursor: 'pointer',
+                                transition: 'all 0.3s ease-in-out',
                                 height: '100%',
                                 display: 'flex',
                                 flexDirection: 'column',
-                                cursor: 'pointer',
-                                transition: 'transform 0.2s, box-shadow 0.2s',
                                 '&:hover': {
                                     transform: 'translateY(-4px)',
-                                    boxShadow: 4,
+                                    borderColor: '#002664',
+                                    background: 'linear-gradient(135deg, #ffffff 0%, rgba(0, 38, 100, 0.05) 100%)',
+                                    boxShadow: '0 8px 25px rgba(0, 38, 100, 0.15)',
                                 },
                             }}
                             onClick={() => navigate(`/spreadsheet/${spreadsheet.id}`)}
                         >
-                            <CardContent sx={{ flexGrow: 1 }}>
-                                <Box display="flex" justifyContent="space-between" alignItems="start">
-                                    <Typography variant="h6" component="h2" gutterBottom>
+                            <Box sx={{ flexGrow: 1 }}>
+                                <Box display="flex" justifyContent="space-between" alignItems="start" mb={2}>
+                                    <Typography 
+                                        variant="h6" 
+                                        sx={{ 
+                                            fontWeight: 600,
+                                            color: '#002664',
+                                            lineHeight: 1.3,
+                                            flex: 1,
+                                            mr: 1
+                                        }}
+                                    >
                                         {spreadsheet.title}
                                     </Typography>
                                     <IconButton
@@ -251,6 +319,12 @@ export const SpreadsheetList: React.FC = () => {
                                         onClick={(e) => {
                                             e.stopPropagation();
                                             handleMenuOpen(e, spreadsheet);
+                                        }}
+                                        sx={{
+                                            color: '#002664',
+                                            '&:hover': {
+                                                background: 'rgba(0, 38, 100, 0.1)',
+                                            }
                                         }}
                                     >
                                         <MoreVertIcon />
@@ -261,22 +335,49 @@ export const SpreadsheetList: React.FC = () => {
                                     {getPermissionChip(spreadsheet.my_permission)}
                                 </Box>
 
-                                <Typography variant="body2" color="textSecondary" gutterBottom>
+                                <Typography 
+                                    variant="body2" 
+                                    color="text.secondary" 
+                                    gutterBottom
+                                    sx={{ fontWeight: 500 }}
+                                >
                                     {spreadsheet.rows} × {spreadsheet.cols} ячеек
                                 </Typography>
 
-                                <Typography variant="caption" color="textSecondary">
+                                <Typography 
+                                    variant="caption" 
+                                    color="text.secondary"
+                                    sx={{ fontSize: '0.8rem' }}
+                                >
                                     Обновлено: {formatDate(spreadsheet.updated_at)}
                                 </Typography>
-                            </CardContent>
-                        </Card>
+                            </Box>
+                        </Paper>
                     ))}
                 </Box>
             )}
 
-            <Dialog open={createDialogOpen} onClose={() => setCreateDialogOpen(false)}>
-                <DialogTitle>Создать новую таблицу</DialogTitle>
-                <DialogContent>
+            <Dialog 
+                open={createDialogOpen} 
+                onClose={() => setCreateDialogOpen(false)}
+                PaperProps={{
+                    sx: {
+                        borderRadius: 3,
+                        background: 'linear-gradient(135deg, #ffffff 0%, #fafbfc 100%)',
+                        border: '1px solid rgba(0, 38, 100, 0.1)',
+                    }
+                }}
+            >
+                <DialogTitle 
+                    sx={{ 
+                        fontWeight: 600,
+                        color: '#002664',
+                        background: 'linear-gradient(135deg, rgba(0, 38, 100, 0.05) 0%, transparent 100%)',
+                    }}
+                >
+                    Создать новую таблицу
+                </DialogTitle>
+                <DialogContent sx={{ pt: 3 }}>
                     <TextField
                         autoFocus
                         margin="dense"
@@ -288,11 +389,40 @@ export const SpreadsheetList: React.FC = () => {
                         onKeyPress={(e) => {
                             if (e.key === 'Enter') handleCreate();
                         }}
+                        sx={{
+                            '& .MuiOutlinedInput-root': {
+                                borderRadius: 2,
+                            }
+                        }}
                     />
                 </DialogContent>
-                <DialogActions>
-                    <Button onClick={() => setCreateDialogOpen(false)}>Отмена</Button>
-                    <Button onClick={handleCreate} variant="contained" color="primary">
+                <DialogActions sx={{ p: 3, pt: 0 }}>
+                    <Button 
+                        onClick={() => setCreateDialogOpen(false)}
+                        sx={{
+                            color: '#002664',
+                            fontWeight: 600,
+                            borderRadius: 2,
+                            px: 3,
+                        }}
+                    >
+                        Отмена
+                    </Button>
+                    <Button 
+                        onClick={handleCreate} 
+                        variant="contained"
+                        sx={{
+                            background: 'linear-gradient(135deg, #002664 0%, #0f4dbc 100%)',
+                            borderRadius: 2,
+                            px: 3,
+                            fontWeight: 600,
+                            boxShadow: '0 4px 15px rgba(0, 38, 100, 0.3)',
+                            '&:hover': {
+                                background: 'linear-gradient(135deg, #0f4dbc 0%, #002664 100%)',
+                                boxShadow: '0 6px 20px rgba(0, 38, 100, 0.4)',
+                            },
+                        }}
+                    >
                         Создать
                     </Button>
                 </DialogActions>
@@ -302,6 +432,13 @@ export const SpreadsheetList: React.FC = () => {
                 anchorEl={anchorEl}
                 open={Boolean(anchorEl)}
                 onClose={handleMenuClose}
+                PaperProps={{
+                    sx: {
+                        borderRadius: 2,
+                        border: '1px solid rgba(0, 38, 100, 0.1)',
+                        boxShadow: '0 4px 20px rgba(0, 38, 100, 0.1)',
+                    }
+                }}
             >
                 <MenuItem
                     onClick={() => {
@@ -310,8 +447,13 @@ export const SpreadsheetList: React.FC = () => {
                         }
                         handleMenuClose();
                     }}
+                    sx={{
+                        fontSize: '0.9rem',
+                        fontWeight: 500,
+                        color: '#002664',
+                    }}
                 >
-                    <EditIcon fontSize="small" sx={{ mr: 1 }} />
+                    <EditIcon fontSize="small" sx={{ mr: 1, color: '#002664' }} />
                     Открыть
                 </MenuItem>
                 {selectedSpreadsheet?.my_permission === 'owner' && (
@@ -322,12 +464,40 @@ export const SpreadsheetList: React.FC = () => {
                             }
                             handleMenuClose();
                         }}
+                        sx={{
+                            fontSize: '0.9rem',
+                            fontWeight: 500,
+                            color: '#d32f2f',
+                        }}
                     >
-                        <DeleteIcon fontSize="small" sx={{ mr: 1 }} />
+                        <DeleteIcon fontSize="small" sx={{ mr: 1, color: '#d32f2f' }} />
                         Удалить
                     </MenuItem>
                 )}
-            </Menu>
+                            <MenuItem
+                    onClick={async () => {
+                        if (!selectedSpreadsheet) return;
+                        try {
+                            const blob = await apiService.exportSpreadsheetExcel(selectedSpreadsheet.id);
+                            const url = URL.createObjectURL(blob);
+                            const a = document.createElement('a');
+                            a.href = url;
+                            a.download = `${selectedSpreadsheet.title || 'export'}.xlsx`;
+                            document.body.appendChild(a);
+                            a.click();
+                            a.remove();
+                            URL.revokeObjectURL(url);
+                        } catch (err) {
+                            alert((err as any)?.message || 'Не удалось экспортировать Excel');
+                        } finally {
+                            handleMenuClose();
+                        }
+                    }}
+                    sx={{ fontSize: '0.9rem', fontWeight: 500 }}
+                >
+                    <FileDownloadIcon fontSize="small" sx={{ mr: 1 }} />
+                    Экспорт в Excel
+                </MenuItem></Menu>
         </Box>
     );
 };
